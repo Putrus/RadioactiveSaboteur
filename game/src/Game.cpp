@@ -15,9 +15,9 @@ void Game::run() {
       while (time_since_last_update > m_time_per_frame) {
          time_since_last_update -= m_time_per_frame;
 
+         processEvents();
          update(m_time_per_frame);
       }
-      processEvents();
       render();
    }
 }
