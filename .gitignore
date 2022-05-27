@@ -1,5 +1,7 @@
 .vs
+*.db
+*.opendb
+*.user
 
 bin
-
-SFML-2.5.1
+external
