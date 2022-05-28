@@ -44,5 +44,8 @@
     <ClInclude Include="include\Hero.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\FixedObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
