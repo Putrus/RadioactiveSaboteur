@@ -1,9 +1,15 @@
 #pragma once
 
+#include <cassert>
+#include <map>
+#include <memory>
+#include <stdexcept>
+#include <string>
+
 template <typename Resource, typename Identifier>
 class ResourceHolder {
 public:
-   void load(Identifier id, const char* filename) {
+   Resource* load(Identifier id, const char* filename) {
       //create and load resource
       std::unique_ptr<Resource> resource(new Resource());
       if (!resource->loadFromFile(filename)) {
@@ -12,10 +18,11 @@ public:
       }
       //insert resource to map
       insertResource(id, std::move(resource));
+      return m_resource_map[id].get();
    }
 
    template <typename Parameter>
-   void load(Identifier id, const char* filename, const Parameter& second_param) {
+   Resource* load(Identifier id, const char* filename, const Parameter& second_param) {
       //create and load resource
       std::unique_ptr<Resource> resource(new Resource());
       if (!resource->loadFromFile(filename, second_param)) {
@@ -24,6 +31,7 @@ public:
       }
       //insert resource to map
       insertResource(id, std::move(resource));
+      return m_resource_map[id].get();
    }
 
    Resource& get(Identifier id) {

@@ -6,14 +6,15 @@ World::World()
    m_collision_items.reserve(32);
 }
 
-void World::add(const CollisionItem& shape)
+void World::add(CollisionItem* shape)
 {
-   m_collision_items.emplace_back(shape);
+   m_collision_items.push_back(shape);
 }
 
-void World::remove(const CollisionItem& collision_item)
+void World::remove(CollisionItem* collision_item)
 {
-   auto it = std::find(m_collision_items.begin(), m_collision_items.end(), &collision_item);
+   //auto it = std::find_if(m_collision_items.begin(), m_collision_items.end(), &collision_item,
+   auto it = std::find(m_collision_items.begin(), m_collision_items.end(), collision_item);
    assert(it != m_collision_items.end());
    if (it != m_collision_items.end())
    {
@@ -38,6 +39,7 @@ bool handleCollisionOfTwoAABB(const CollisionItem& aabb1, const CollisionItem& a
 bool handleCollisionOfTwoSpheres(const CollisionItem& sphere1, const CollisionItem& sphere2, CollisionInfo& result)
 {
    assert(false);//not implemented
+   return false;
    //sf::Vector2f offset = sphere2.shape.sphere.center - sphere1.shape.sphere.center;
    //if (length(offset) < sphere1.shape.sphere.radius + sphere2.shape.sphere.radius)
    //{
@@ -56,28 +58,28 @@ bool handleCollisionSphereVsAABB(const CollisionItem& sphere, const CollisionIte
 bool World::checkSingleCollision(const CollisionItem* object, CollisionInfo& result) const
 {
    bool collision = false;
-   for (const CollisionItem& item : m_collision_items)
+   for (const CollisionItem* item : m_collision_items)
    {
-      if (&item == object)
+      if (item == object)
          continue;
 
       // todo performance, use 2d array of test functions
       bool local_collision = false;
       if (object->shape.type == CollisionShapeType::AxisAlignedBoundingBox)
       {
-         if (item.shape.type == CollisionShapeType::AxisAlignedBoundingBox)
-            local_collision = handleCollisionOfTwoAABB(*object, item, result);
-         else if (item.shape.type == CollisionShapeType::Sphere)
-            local_collision = handleCollisionSphereVsAABB(item, *object, result);
+         if (item->shape.type == CollisionShapeType::AxisAlignedBoundingBox)
+            local_collision = handleCollisionOfTwoAABB(*object, *item, result);
+         else if (item->shape.type == CollisionShapeType::Sphere)
+            local_collision = handleCollisionSphereVsAABB(*item, *object, result);
          else
             assert(false);//not implemented
       }
       else if (object->shape.type == CollisionShapeType::Sphere)
       {
-         if (item.shape.type == CollisionShapeType::AxisAlignedBoundingBox)
-            local_collision = handleCollisionSphereVsAABB(*object, item, result);
-         else if (item.shape.type == CollisionShapeType::Sphere)
-            local_collision = handleCollisionOfTwoSpheres(*object, item, result);
+         if (item->shape.type == CollisionShapeType::AxisAlignedBoundingBox)
+            local_collision = handleCollisionSphereVsAABB(*object, *item, result);
+         else if (item->shape.type == CollisionShapeType::Sphere)
+            local_collision = handleCollisionOfTwoSpheres(*object, *item, result);
          else
             assert(false);//not implemented
       }
@@ -88,7 +90,7 @@ bool World::checkSingleCollision(const CollisionItem* object, CollisionInfo& res
       if (local_collision)
       {
          result.item1 = object;
-         result.item2 = &item;
+         result.item2 = item;
          collision = true;
          break;
       }

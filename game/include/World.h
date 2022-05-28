@@ -49,11 +49,11 @@ class World
 public:
 	World();
 
-	void add(const CollisionItem& collision_item);
-	void remove(const CollisionItem& collision_item);
+	void add(CollisionItem* collision_item);
+	void remove(CollisionItem* collision_item);
 	bool checkSingleCollision(const CollisionItem* object, CollisionInfo& result) const;
 
 private:
-	std::vector<CollisionItem> m_collision_items;
+	std::vector<CollisionItem*> m_collision_items;
    const sf::Time m_time_per_frame;
 };
