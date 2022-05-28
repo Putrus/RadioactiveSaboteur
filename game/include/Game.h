@@ -9,7 +9,7 @@ public:
 
 private:
    void processEvents();
-   void update(sf::Time elapsedTime);
+   void update(sf::Time elapsed_time);
    void render();
 
 private:
