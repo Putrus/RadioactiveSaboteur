@@ -21,7 +21,6 @@ void Game::run() {
    sf::Time time_since_last_update = sf::Time::Zero;
    // todo connect with menu handler at the end!
    loadResources();
-   m_hero1.reset(new Hero(m_texture_manager.get(TextureID::TEX_HERO1), sf::Vector2f(10.f, 10.f)));
    newGame();
 
    //game loop
@@ -41,12 +40,14 @@ void Game::run() {
 void Game::newGame()
 {
    sf::Vector2f pos(10, 10);
-   m_hero1.reset(new Hero(m_texture_manager.get(TEX_HERO1), sf::Vector2f(10.f, 10.f)));
+   bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), sf::Vector2f(10.f, 10.f)));
+   kurwinox.reset(new Hero(m_texture_manager.get(TextureID::TEX_HERO2), sf::Vector2f(50.f, 50.f)));
    CollisionItem *collision_item = new CollisionItem;
    collision_item->shape.type = CollisionShapeType::Sphere;
    collision_item->shape.sphere = { frame_size / 2, pos.x, pos.y };
    collision_item->material_type = MT_Hero;
-   g_renderables.push_back(&m_hero1->getSprite());
+   g_renderables.push_back(&bomba->getSprite());
+   g_renderables.push_back(&kurwinox->getSprite());
 
    pos = sf::Vector2f(250, 250);
    FixedObject* object = new FixedObject(m_texture_manager.get(TEX_TREE1), pos, sf::Vector2f(31, 115));
@@ -66,57 +67,9 @@ void Game::processEvents() {
          break;
       }
       //to do change it to sf::Keyboard
-      case sf::Event::KeyReleased:
-      {
-         if (event.key.code == sf::Keyboard::W && m_hero1->getSpeed().y < 0
-            || event.key.code == sf::Keyboard::S && m_hero1->getSpeed().y > 0
-            || event.key.code == sf::Keyboard::A && m_hero1->getSpeed().x < 0
-            || event.key.code == sf::Keyboard::D && m_hero1->getSpeed().x > 0) {
-            m_hero1->setAction(Action::IDLE);
-         }
-         break;
       }
-      case sf::Event::KeyPressed:
-      {
-         if (m_hero1->getSpeed().y <= 0 && event.key.code == sf::Keyboard::W) {
-            if (m_hero1->getSpeed().x < 0)
-               m_hero1->setAction(Action::UPLEFT);
-            else if (m_hero1->getSpeed().x > 0)
-               m_hero1->setAction(Action::UPRIGHT);
-            else
-               m_hero1->setAction(Action::UP);
-            break;
-         }
-         if (m_hero1->getSpeed().y >= 0 && event.key.code == sf::Keyboard::S) {
-            if (m_hero1->getSpeed().x < 0)
-               m_hero1->setAction(Action::DOWNLEFT);
-            else if (m_hero1->getSpeed().x > 0)
-               m_hero1->setAction(Action::DOWNRIGHT);
-            else
-               m_hero1->setAction(Action::DOWN);
-            break;
-         }
-         if (m_hero1->getSpeed().x <= 0 && event.key.code == sf::Keyboard::A) {
-            if (m_hero1->getSpeed().y < 0)
-               m_hero1->setAction(Action::UPLEFT);
-            else if (m_hero1->getSpeed().y > 0)
-               m_hero1->setAction(Action::DOWNLEFT);
-            else
-               m_hero1->setAction(Action::LEFT);
-            break;
-         }
-         if (m_hero1->getSpeed().x >= 0 && event.key.code == sf::Keyboard::D) {
-            if (m_hero1->getSpeed().y < 0)
-               m_hero1->setAction(Action::UPRIGHT);
-            else if (m_hero1->getSpeed().y > 0)
-               m_hero1->setAction(Action::DOWNRIGHT);
-            else
-               m_hero1->setAction(Action::RIGHT);
-            break;
-         }
-         break;
-      }
-      }
+      processPlayerEvents(*bomba, event, 0);
+      processPlayerEvents(*kurwinox, event, 1);
    }
 }
 
@@ -149,13 +102,14 @@ void Game::update(sf::Time elapsed_time) {
    //   m_world.add(collision_item);
    //   // todo game object (keeps graphic data and shape data reference)
    //}
-   m_hero1->update(elapsed_time);
+   bomba->update(elapsed_time);
+   kurwinox->update(elapsed_time);
 }
 
 void Game::render() {
    m_window.clear();
    //draw something
-   m_window.draw(m_hero1->getSprite());
+   m_window.draw(bomba->getSprite());
 
    for (const sf::Drawable* drawable : g_renderables)
    {
@@ -174,4 +128,68 @@ void Game::loadResources() {
    m_texture_manager.load(TEX_HERO1, (data_path + "HERO1.png").c_str());
    m_texture_manager.load(TEX_HERO2, (data_path + "HERO2.png").c_str());
    m_texture_manager.load(TEX_TREE1, (data_path + "tree_1.png").c_str());
+}
+
+void Game::processPlayerEvents(Hero& hero, const sf::Event& event, bool player) {
+   std::vector<sf::Keyboard::Key> controls;
+   if (player) {
+      controls = { sf::Keyboard::Up, sf::Keyboard::Down, sf::Keyboard::Left, sf::Keyboard::Right };
+   }
+   else {
+      controls = { sf::Keyboard::W, sf::Keyboard::S, sf::Keyboard::A, sf::Keyboard::D };
+   }
+   switch (event.type) {
+   case sf::Event::KeyReleased:
+   {
+      //player1
+      if (event.key.code == controls[0] && hero.getSpeed().y < 0
+         || event.key.code == controls[1] && hero.getSpeed().y > 0
+         || event.key.code == controls[2] && hero.getSpeed().x < 0
+         || event.key.code == controls[3] && hero.getSpeed().x > 0) {
+         hero.setAction(Action::IDLE);
+      }
+      break;
+   }
+   case sf::Event::KeyPressed:
+   {
+      //player1
+      if (hero.getSpeed().y <= 0 && event.key.code == controls[0]) {
+         if (hero.getSpeed().x < 0)
+            hero.setAction(Action::UPLEFT);
+         else if (hero.getSpeed().x > 0)
+            hero.setAction(Action::UPRIGHT);
+         else
+            hero.setAction(Action::UP);
+         break;
+      }
+      if (hero.getSpeed().y >= 0 && event.key.code == controls[1]) {
+         if (hero.getSpeed().x < 0)
+            hero.setAction(Action::DOWNLEFT);
+         else if (hero.getSpeed().x > 0)
+            hero.setAction(Action::DOWNRIGHT);
+         else
+            hero.setAction(Action::DOWN);
+         break;
+      }
+      if (hero.getSpeed().x <= 0 && event.key.code == controls[2]) {
+         if (hero.getSpeed().y < 0)
+            hero.setAction(Action::UPLEFT);
+         else if (hero.getSpeed().y > 0)
+            hero.setAction(Action::DOWNLEFT);
+         else
+            hero.setAction(Action::LEFT);
+         break;
+      }
+      if (hero.getSpeed().x >= 0 && event.key.code == controls[3]) {
+         if (hero.getSpeed().y < 0)
+            hero.setAction(Action::UPRIGHT);
+         else if (hero.getSpeed().y > 0)
+            hero.setAction(Action::DOWNRIGHT);
+         else
+            hero.setAction(Action::RIGHT);
+         break;
+      }
+      break;
+   }
+   }
 }
