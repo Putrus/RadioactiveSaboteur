@@ -40,17 +40,36 @@ void Game::run() {
 
 void Game::newGame()
 {
-   auto create_water_collision_item = [this](sf::Vector2f position)
+   auto create_water_collision_item = [this](const sf::IntRect &rect)
    {
       CollisionItem* collision_item = new CollisionItem;
       collision_item->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
-      collision_item->shape.aabb.left = position.x;
-      collision_item->shape.aabb.right = position.x + frame_size;
-      collision_item->shape.aabb.top = position.y;
-      collision_item->shape.aabb.bottom = position.y + frame_size;
+      collision_item->shape.aabb.left = rect.left;
+      collision_item->shape.aabb.right = rect.left + rect.width;
+      collision_item->shape.aabb.top = rect.top;
+      collision_item->shape.aabb.bottom = rect.top + rect.height;
       collision_item->material_type = MT_Water;
       m_world.add(collision_item);
    };
+
+   srand(time(0));
+   sf::Texture &bkg = m_texture_manager.get(TEX_BACKGROUND);
+
+   for (int y = 0; y < 36; ++y)
+   {
+      for (int x = 0; x < 64; ++x)
+      {
+         int type = rand() % 8;
+         sf::IntRect rect(30 * (type % 7), 30 * (type / 7), 30, 30);
+         if (type < 900)
+            m_background.addSprite(bkg, rect);
+         else
+         {
+            m_background.addSprite(bkg, rect);
+            create_water_collision_item(rect);
+         }
+      }
+   }
 
    sf::Vector2f pos(10, 10);
    CollisionItem *collision_item = new CollisionItem;
@@ -148,7 +167,9 @@ void Game::update(sf::Time elapsed_time) {
 
 void Game::render() {
    m_window.clear();
-   //draw something
+   
+   m_background.draw(m_window);
+
    m_window.draw(bomba->getSprite());
 
    for (const sf::Drawable* drawable : g_renderables)

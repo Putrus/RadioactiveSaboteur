@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Background.h"
 #include "Resources.h"
 #include "World.h"
 #include "Hero.h"
@@ -27,6 +28,7 @@ private:
    TextureHolder m_texture_manager;
    std::vector<const sf::Drawable*> g_renderables;
    World m_world;
+   Background m_background;
    const sf::Time m_time_per_frame;
    std::unique_ptr<Hero> bomba;
    std::unique_ptr<Hero> kurwinox;
