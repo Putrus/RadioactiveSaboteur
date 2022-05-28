@@ -3,7 +3,15 @@
 #include <SFML/Graphics.hpp>
 #include <cassert>
 
-Game::Game() : m_window(sf::VideoMode(400, 400), "Radioactive Saboteur"), m_time_per_frame(sf::seconds(1.f / 60.f)) {
+Game::Game(const std::string& root_path) :
+   m_root_path(root_path),
+   m_window(sf::VideoMode(400, 400), "Radioactive Saboteur"), m_time_per_frame(sf::seconds(1.f / 60.f))
+{
+   if (m_root_path.size() > 0)
+   {
+      if (m_root_path.back() != '/' && m_root_path.back() != '\\')
+         m_root_path += '\\';
+   }
 }
 
 void Game::run() {
@@ -39,6 +47,7 @@ public:
    {
       // idle - [0,0]
       sf::IntRect rect(0, 0, frame_size, frame_size);
+      m_sprite.setTexture(texture);
       m_sprite.setTextureRect(rect);
       m_sprite.setOrigin(frame_size / 2, frame_size / 2);
       m_sprite.setPosition(position);
@@ -63,8 +72,8 @@ Hero* g_hero1;
 
 void Game::newGame()
 {
-   std::string data_root = R"(D:\Projects\GAMEDEV\RadioactiveSaboteur\data\)";
-   sf::Texture *texture = m_texture_manager.load("Hero1", (data_root + "hero1.png").c_str());
+   std::string data_path = m_root_path + "data\\";
+   sf::Texture *texture = m_texture_manager.load("Hero1", (data_path + "hero1.png").c_str());
    if (!texture)
    {
       reportError("Cannot load texture");
@@ -128,8 +137,8 @@ void Game::update(sf::Time elapsed_time) {
 void Game::render() {
    m_window.clear();
    //draw something
-   m_window.display();
    m_window.draw(g_hero1->getSprite());
+   m_window.display();
 }
 
 void Game::reportError(const std::string& msg)

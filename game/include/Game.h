@@ -6,7 +6,7 @@
 
 class Game {
 public:
-   Game();
+   Game(const std::string& root_path);
    void run();
    void newGame();
 
@@ -17,6 +17,7 @@ private:
    void reportError(const std::string& msg);
 
 private:
+   std::string m_root_path;
    sf::RenderWindow m_window;
    ResourceHolder<sf::Texture, std::string> m_texture_manager;
    World m_world;
