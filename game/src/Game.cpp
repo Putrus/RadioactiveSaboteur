@@ -4,7 +4,15 @@
 #include <SFML/Graphics.hpp>
 #include <cassert>
 
-Game::Game() : m_window(sf::VideoMode(400, 400), "Radioactive Saboteur"), m_time_per_frame(sf::seconds(1.f / 60.f)) {
+Game::Game(const std::string& root_path) :
+   m_root_path(root_path),
+   m_window(sf::VideoMode(400, 400), "Radioactive Saboteur"), m_time_per_frame(sf::seconds(1.f / 60.f))
+{
+   if (m_root_path.size() > 0)
+   {
+      if (m_root_path.back() != '/' && m_root_path.back() != '\\')
+         m_root_path += '\\';
+   }
 }
 
 void Game::run() {
@@ -125,5 +133,6 @@ void Game::reportError(const std::string& msg)
 }
 
 void Game::loadResources() {
-   m_texture_manager.load(HERO1, "D:/GitHub/RadioactiveSaboteur/data/HERO1.png");
+   std::string data_path = m_root_path + "data\\";
+   m_texture_manager.load(HERO1, (data_path + "HERO1.png").c_str());
 }

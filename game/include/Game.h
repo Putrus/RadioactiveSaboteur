@@ -9,7 +9,7 @@
 
 class Game {
 public:
-   Game();
+   Game(const std::string& root_path);
    void run();
    void newGame();
 
@@ -21,6 +21,7 @@ private:
    void loadResources();
 
 private:
+   std::string m_root_path;
    sf::RenderWindow m_window;
    TextureHolder m_texture_manager;
    World m_world;
