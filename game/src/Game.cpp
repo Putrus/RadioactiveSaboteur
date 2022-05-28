@@ -1,4 +1,5 @@
 #include "../include/Game.h"
+#include "../include/Hero.h"
 
 #include <SFML/Graphics.hpp>
 #include <cassert>
@@ -10,6 +11,8 @@ void Game::run() {
    sf::Clock clock;
    sf::Time time_since_last_update = sf::Time::Zero;
    // todo connect with menu handler at the end!
+   loadResources();
+   m_hero1.reset(new Hero(m_texture_manager.get(TextureID::HERO1), sf::Vector2f(10.f, 10.f)));
    newGame();
 
    //game loop
@@ -26,58 +29,15 @@ void Game::run() {
    }
 }
 
-
-constexpr int frame_size = 64;
-constexpr int texture_width = 256;
-constexpr int texture_height = 1024;
-
-class Hero
-{
-public:
-   Hero(sf::Texture& texture, /*CollisionItem &collision_item, */sf::Vector2f position) :
-      m_texture(texture)
-   {
-      // idle - [0,0]
-      sf::IntRect rect(0, 0, frame_size, frame_size);
-      m_sprite.setTextureRect(rect);
-      m_sprite.setOrigin(frame_size / 2, frame_size / 2);
-      m_sprite.setPosition(position);
-   }
-
-   void setPosition(const sf::Vector2f& position)
-   {
-      m_sprite.setPosition(position);
-   }
-
-   sf::Sprite& getSprite()
-   {
-      return m_sprite;
-   }
-
-private:
-   sf::Texture& m_texture;
-   sf::Sprite m_sprite;
-};
-
-Hero* g_hero1;
-
 void Game::newGame()
 {
-   std::string data_root = R"(D:\Projects\GAMEDEV\RadioactiveSaboteur\data\)";
-   sf::Texture *texture = m_texture_manager.load("Hero1", (data_root + "hero1.png").c_str());
-   if (!texture)
-   {
-      reportError("Cannot load texture");
-      return;
-   }
-
-   sf::Vector2f position1(50, 50);
-   g_hero1 = new Hero(*texture, position1);
-   CollisionItem *collision_item = new CollisionItem;
-   collision_item->shape.type = CollisionShapeType::Sphere;
-   collision_item->shape.sphere = { frame_size / 2, position1.x, position1.y };
-   collision_item->material_type = 5;// todo prepare material list e.g. water, wall, pickable objects etc.
-   m_world.add(collision_item);
+   //sf::Vector2f position1(50, 50);
+   //g_hero1 = new Hero(*texture, position1);
+   //CollisionItem *collision_item = new CollisionItem;
+   //collision_item->shape.type = CollisionShapeType::Sphere;
+   //collision_item->shape.sphere = { frame_size / 2, position1.x, position1.y };
+   //collision_item->material_type = 5;// todo prepare material list e.g. water, wall, pickable objects etc.
+   //m_world.add(collision_item);
    // todo game object (keeps graphic data and shape data reference)
 }
 
@@ -88,6 +48,32 @@ void Game::processEvents() {
       case sf::Event::Closed:
       {
          m_window.close();
+         break;
+      }
+      case sf::Event::KeyReleased:
+      {
+         if (event.key.code == sf::Keyboard::W && m_hero1->getSpeed().y < 0
+            || event.key.code == sf::Keyboard::S && m_hero1->getSpeed().y > 0
+            || event.key.code == sf::Keyboard::A && m_hero1->getSpeed().x < 0
+            || event.key.code == sf::Keyboard::D && m_hero1->getSpeed().x > 0) {
+            m_hero1->setAction(Action::IDLE);
+         }
+         break;
+      }
+      case sf::Event::KeyPressed:
+      {
+         if (event.key.code == sf::Keyboard::W) {
+            m_hero1->setAction(Action::UP);
+         }
+         if (event.key.code == sf::Keyboard::S) {
+            m_hero1->setAction(Action::DOWN);
+         }
+         if (event.key.code == sf::Keyboard::A) {
+            m_hero1->setAction(Action::LEFT);
+         }
+         if (event.key.code == sf::Keyboard::D) {
+            m_hero1->setAction(Action::RIGHT);
+         }
          break;
       }
       }
@@ -123,16 +109,21 @@ void Game::update(sf::Time elapsed_time) {
    //   m_world.add(collision_item);
    //   // todo game object (keeps graphic data and shape data reference)
    //}
+   m_hero1->update(elapsed_time);
 }
 
 void Game::render() {
    m_window.clear();
    //draw something
+   m_window.draw(m_hero1->getSprite());
    m_window.display();
-   m_window.draw(g_hero1->getSprite());
 }
 
 void Game::reportError(const std::string& msg)
 {
    assert(false);
+}
+
+void Game::loadResources() {
+   m_texture_manager.load(HERO1, "D:/GitHub/RadioactiveSaboteur/data/HERO1.png");
 }
