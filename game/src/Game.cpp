@@ -37,6 +37,33 @@ void Game::processEvents() {
 
 void Game::update(sf::Time elapsed_time) {
    //update
+
+   // handle players move
+   //CollisionInfo collision;
+   //// two approaches: update position and check collision or check line from old to new position
+   //if (m_world.checkSingleCollision(player1.collision_item, collision))
+   //{
+   //   if (collision.item2->material_type == 1)  // water
+   //   {
+   //      // block
+   //   }
+   //   else if (collision.item2->material_type == 3)// wall
+   //   {
+   //      // slide
+   //   }
+   //}
+
+   // add new barrel
+   //if (...)
+   //{
+   //   // todo graphic data
+   //   CollisionItem collision_item{};
+   //   collision_item.shape.type = CollisionShapeType::Sphere;
+   //   collision_item.shape.sphere = { radius, x, y };
+   //   collision_item.material_type = 5;// todo prepare material list e.g. water, wall, pickable objects etc.
+   //   m_world.add(collision_item);
+   //   // todo game object (keeps graphic data and shape data reference)
+   //}
 }
 
 void Game::render() {

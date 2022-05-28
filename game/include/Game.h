@@ -1,5 +1,6 @@
 #pragma once
 
+#include "World.h"
 #include <SFML/Graphics.hpp>
 
 class Game {
@@ -14,5 +15,6 @@ private:
 
 private:
    sf::RenderWindow m_window;
+   World m_world;
    const sf::Time m_time_per_frame;
 };
