@@ -19,11 +19,18 @@ enum Action {
    DOWNRIGHT
 };
 
+struct CollisionItem;
+
 class Hero
 {
 public:
-   Hero(sf::Texture& texture, /*CollisionItem &collision_item, */sf::Vector2f position);
+   Hero(sf::Texture& texture, CollisionItem &collision_item, sf::Vector2f position);
 
+   float getRadius() const
+   {
+      return m_radius;
+   }
+   sf::Vector2f getPosition() const;
    void setPosition(const sf::Vector2f& position);
    sf::Sprite& getSprite();
    void setAction(Action action);
@@ -32,6 +39,8 @@ public:
 
 private:
    sf::Sprite m_sprite;
+   float m_radius;
+   //CollisionItem& m_collision_item;
    sf::Vector2f m_speed;
    Action m_action;
    sf::Time m_last_animation_frame_time;

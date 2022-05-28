@@ -1,4 +1,5 @@
 #include "../include/World.h"
+#include "../include/Math.h"
 #include <cassert>
 
 World::World()
@@ -55,6 +56,56 @@ bool handleCollisionSphereVsAABB(const CollisionItem& sphere, const CollisionIte
    return false;
 }
 
+bool handleCollisionAABBvsLine(const CollisionItem& sphere, sf::Vector2f line_p1, sf::Vector2f line_p2, CollisionInfo& result)
+{
+   assert(false);
+   return false;
+}
+
+bool handleCollisionSphereVsLine(sf::Vector2f position, float radius, sf::Vector2f line_p1, sf::Vector2f line_p2, CollisionInfo& result)
+{
+   // u = p1 - p0
+   // q0 - point
+   // q1 - closest point on u
+   // p0 + (p1 - p0) * t
+   // t = - ((p0 - q0) dot (p1 - p0)) / u dot u
+   // jeœli t z poza zakreso 0-1 to mniejsza odleg³oœæ punktu z koñcem odcinka - NIEEEE
+   sf::Vector2f u = line_p2 - line_p1;
+   float t = -math::dot_product(u, (line_p1 - position)) / math::dot_product(u, u);
+
+   if (t <= 0.0f)
+   {
+      if (math::distance(line_p1, position) < radius)
+      {
+         result.point = line_p1;
+         return true;
+      }
+      else
+         return false;
+   }
+   else if (t >= 1.0f)
+   {
+      if (math::distance(line_p2, position) < radius)
+      {
+         result.point = line_p2;
+         return true;
+      }
+      else
+         return false;
+   }
+   else
+   {
+      result.point = line_p1 + u * t;
+      return true;
+   }
+}
+
+bool handleCollisionSphereVsLine(const CollisionItem& sphere, sf::Vector2f line_p1, sf::Vector2f line_p2, CollisionInfo& result)
+{
+   return handleCollisionSphereVsLine(sf::Vector2f(sphere.shape.sphere.x, sphere.shape.sphere.y), sphere.shape.sphere.radius,
+      line_p1, line_p2, result);
+}
+
 bool World::checkSingleCollision(const CollisionItem* object, CollisionInfo& result) const
 {
    bool collision = false;
@@ -91,6 +142,33 @@ bool World::checkSingleCollision(const CollisionItem* object, CollisionInfo& res
       {
          result.item1 = object;
          result.item2 = item;
+         collision = true;
+         break;
+      }
+   }
+
+   return collision;
+}
+
+bool World::checkSingleCollision(sf::Vector2f line_p1, sf::Vector2f line_p2, CollisionInfo& result) const
+{
+   bool collision = false;
+   for (const CollisionItem* item : m_collision_items)
+   {
+      // todo performance, use 2d array of test functions
+      bool local_collision = false;
+      if (item->shape.type == CollisionShapeType::AxisAlignedBoundingBox)
+         local_collision = handleCollisionAABBvsLine(*item, line_p1, line_p2, result);
+      else if (item->shape.type == CollisionShapeType::Sphere)
+         local_collision = handleCollisionSphereVsLine(*item, line_p1, line_p2, result);
+      else
+         assert(false);//not implemented
+
+      // todo don't stop but test other items for closer collision
+      if (local_collision)
+      {
+         result.item1 = item;
+         result.item2 = nullptr;
          collision = true;
          break;
       }

@@ -1,14 +1,23 @@
 #include "../include/Hero.h"
+#include "../include/World.h"
 
 #define SQRT2 1.41f
 
-Hero::Hero(sf::Texture& texture, /*CollisionItem &collision_item, */sf::Vector2f position) : 
+Hero::Hero(sf::Texture& texture, CollisionItem &collision_item, sf::Vector2f position) : 
    m_sprite(texture), m_speed(0.f, 0.f), m_action(Action::IDLE), m_animation_delay(0.f), m_animation_speed(0.2f) {
    // idle - [0,0]
    sf::IntRect rect(0, 0, frame_size, frame_size);
    m_sprite.setTextureRect(rect);
    m_sprite.setOrigin(frame_size / 2, frame_size / 2);
    m_sprite.setPosition(position);
+
+   // todo ugly like a hell
+   m_radius = collision_item.shape.sphere.radius;
+}
+
+sf::Vector2f Hero::getPosition() const
+{
+   return m_sprite.getPosition();
 }
 
 void Hero::setPosition(const sf::Vector2f& position)

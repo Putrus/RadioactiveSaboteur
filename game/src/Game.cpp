@@ -1,6 +1,7 @@
 #include "../include/Game.h"
 #include "../include/FixedObject.h"
 #include "../include/Hero.h"
+#include "../include/Math.h"
 
 #include <SFML/Graphics.hpp>
 #include <cassert>
@@ -40,14 +41,14 @@ void Game::run() {
 void Game::newGame()
 {
    sf::Vector2f pos(10, 10);
-   bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), sf::Vector2f(10.f, 10.f)));
-   kurwinox.reset(new Hero(m_texture_manager.get(TextureID::TEX_HERO2), sf::Vector2f(50.f, 50.f)));
    CollisionItem *collision_item = new CollisionItem;
    collision_item->shape.type = CollisionShapeType::Sphere;
    collision_item->shape.sphere = { frame_size / 2, pos.x, pos.y };
    collision_item->material_type = MT_Hero;
+   bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), *collision_item, sf::Vector2f(10.f, 10.f)));
+   //kurvinox.reset(new Hero(m_texture_manager.get(TEX_HERO2), *collision_item, sf::Vector2f(500.f, 210.f)));
    g_renderables.push_back(&bomba->getSprite());
-   g_renderables.push_back(&kurwinox->getSprite());
+   //g_renderables.push_back(&kurwinox->getSprite());
 
    pos = sf::Vector2f(250, 250);
    FixedObject* object = new FixedObject(m_texture_manager.get(TEX_TREE1), pos, sf::Vector2f(31, 115));
@@ -69,27 +70,50 @@ void Game::processEvents() {
       //to do change it to sf::Keyboard
       }
       processPlayerEvents(*bomba, event, 0);
-      processPlayerEvents(*kurwinox, event, 1);
+      //processPlayerEvents(*kurwinox, event, 1);
    }
 }
 
 void Game::update(sf::Time elapsed_time) {
-   //update
-
    // handle players move
-   //CollisionInfo collision;
-   //// two approaches: Action::UPdate position and check collision or check line from old to new position
-   //if (m_world.checkSingleCollision(player1.collision_item, collision))
-   //{
-   //   if (collision.item2->material_type == 1)  // water
-   //   {
-   //      // block
-   //   }
-   //   else if (collision.item2->material_type == 3)// wall
-   //   {
-   //      // slide
-   //   }
-   //}
+   // two approaches:
+   // - update position and check collision afterwards
+   // - check line from old to new position
+   sf::Vector2f pos = bomba->getPosition();
+   sf::Vector2f target = pos + bomba->getSpeed();
+   CollisionInfo collision;
+   if (m_world.checkSingleCollision(pos, target, collision))
+   {
+      if (collision.item1->material_type == MT_Barrel)
+      {
+         assert(false);//not implemented
+      }
+      // blocking objects
+      else
+      {
+         float collision_distance = math::distance(pos, collision.point);
+         if (collision_distance > bomba->getRadius())
+         {
+            // adjust hero position
+            sf::Vector2f offset = target - pos;
+            math::set_length(offset, collision_distance - 1);
+            pos += offset;
+         }
+         // else don't move
+      }
+
+      //if (collision.item2->material_type == 1)  // water
+      //{
+      //   // block
+      //}
+      //else if (collision.item2->material_type == 3)// wall
+      //{
+      //   // slide
+      //}
+   }
+   bomba->setPosition(target);
+   bomba->update(elapsed_time);
+   //kurwinox->update(elapsed_time);
 
    // add new barrel
    //if (...)
@@ -102,8 +126,7 @@ void Game::update(sf::Time elapsed_time) {
    //   m_world.add(collision_item);
    //   // todo game object (keeps graphic data and shape data reference)
    //}
-   bomba->update(elapsed_time);
-   kurwinox->update(elapsed_time);
+
 }
 
 void Game::render() {
