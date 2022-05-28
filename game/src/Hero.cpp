@@ -8,7 +8,9 @@ Hero::Hero(sf::Texture& texture, CollisionItem &collision_item, sf::Vector2f pos
    // idle - [0,0]
    sf::IntRect rect(0, 0, frame_size, frame_size);
    m_sprite.setTextureRect(rect);
-   m_sprite.setOrigin(frame_size / 2, frame_size / 2);
+   // todo!!!!!!!!!!!!!!!!!!!!
+   m_sprite.setOrigin(32, 49);
+   //m_sprite.setOrigin(frame_size / 2, frame_size / 2);
    m_sprite.setPosition(position);
 
    // todo ugly like a hell
@@ -87,7 +89,7 @@ void Hero::setAction(Action action) {
 
 void Hero::update(sf::Time elapsed_time) {
    //update position
-   m_sprite.setPosition(m_sprite.getPosition() + m_speed);
+   //m_sprite.setPosition(m_sprite.getPosition() + m_speed);
    
    //update animation
    m_animation_delay += elapsed_time.asSeconds();

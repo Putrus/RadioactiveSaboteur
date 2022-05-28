@@ -64,40 +64,55 @@ bool handleCollisionAABBvsLine(const CollisionItem& sphere, sf::Vector2f line_p1
 
 bool handleCollisionSphereVsLine(sf::Vector2f position, float radius, sf::Vector2f line_p1, sf::Vector2f line_p2, CollisionInfo& result)
 {
-   // u = p1 - p0
-   // q0 - point
-   // q1 - closest point on u
-   // p0 + (p1 - p0) * t
-   // t = - ((p0 - q0) dot (p1 - p0)) / u dot u
-   // jeœli t z poza zakreso 0-1 to mniejsza odleg³oœæ punktu z koñcem odcinka - NIEEEE
    sf::Vector2f u = line_p2 - line_p1;
-   float t = -math::dot_product(u, (line_p1 - position)) / math::dot_product(u, u);
-
-   if (t <= 0.0f)
+   float dist1 = math::distance(line_p1, position);
+   float dist2 = math::distance(line_p2, position);
+   float min_dist = std::min(dist1, dist2);
+   if (min_dist < radius)
    {
-      if (math::distance(line_p1, position) < radius)
-      {
-         result.point = line_p1;
-         return true;
-      }
-      else
-         return false;
-   }
-   else if (t >= 1.0f)
-   {
-      if (math::distance(line_p2, position) < radius)
-      {
-         result.point = line_p2;
-         return true;
-      }
-      else
-         return false;
-   }
-   else
-   {
-      result.point = line_p1 + u * t;
+      sf::Vector2f offset = u;
+      math::set_length(u, std::max(min_dist - 1, 0.f));
+      result.point = line_p1 + u;
       return true;
    }
+   else
+      return false;
+
+   //// u = p1 - p0
+   //// q0 - point
+   //// q1 - closest point on u
+   //// p0 + (p1 - p0) * t
+   //// t = - ((p0 - q0) dot (p1 - p0)) / u dot u
+   //// jeœli t z poza zakreso 0-1 to mniejsza odleg³oœæ punktu z koñcem odcinka - NIEEEE
+   //sf::Vector2f u = line_p2 - line_p1;
+   //assert(math::length(u) > 0);
+   //float t = -math::dot_product((line_p1 - position), u) / math::dot_product(u, u);
+
+   //if (t <= 0.0f)
+   //{
+   //   if (math::distance(line_p1, position) < radius)
+   //   {
+   //      result.point = line_p1;
+   //      return true;
+   //   }
+   //   else
+   //      return false;
+   //}
+   //else if (t >= 1.0f)
+   //{
+   //   if (math::distance(line_p2, position) < radius)
+   //   {
+   //      result.point = line_p2;
+   //      return true;
+   //   }
+   //   else
+   //      return false;
+   //}
+   //else
+   //{
+   //   result.point = line_p1 + u * t;
+   //   return true;
+   //}
 }
 
 bool handleCollisionSphereVsLine(const CollisionItem& sphere, sf::Vector2f line_p1, sf::Vector2f line_p2, CollisionInfo& result)

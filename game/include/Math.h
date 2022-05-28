@@ -10,12 +10,12 @@ namespace math
 
    inline float dot_product(sf::Vector2f v1, sf::Vector2f v2)
    {
-      return v1.x * v2.x + v1.y + v2.y;
+      return v1.x * v2.x + v1.y * v2.y;
    }
 
    inline float length(sf::Vector2f v)
    {
-      return sqrt(v.x * v.x + v.y + v.y);
+      return sqrt(v.x * v.x + v.y * v.y);
    }
 
    inline float distance(sf::Vector2f v1, sf::Vector2f v2)

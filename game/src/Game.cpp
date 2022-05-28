@@ -40,10 +40,22 @@ void Game::run() {
 
 void Game::newGame()
 {
+   auto create_water_collision_item = [this](sf::Vector2f position)
+   {
+      CollisionItem* collision_item = new CollisionItem;
+      collision_item->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
+      collision_item->shape.aabb.left = position.x;
+      collision_item->shape.aabb.right = position.x + frame_size;
+      collision_item->shape.aabb.top = position.y;
+      collision_item->shape.aabb.bottom = position.y + frame_size;
+      collision_item->material_type = MT_Water;
+      m_world.add(collision_item);
+   };
+
    sf::Vector2f pos(10, 10);
    CollisionItem *collision_item = new CollisionItem;
    collision_item->shape.type = CollisionShapeType::Sphere;
-   collision_item->shape.sphere = { frame_size / 2, pos.x, pos.y };
+   collision_item->shape.sphere = { pos.x, pos.y, frame_size / 2 };
    collision_item->material_type = MT_Hero;
    bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), *collision_item, sf::Vector2f(10.f, 10.f)));
    //kurvinox.reset(new Hero(m_texture_manager.get(TEX_HERO2), *collision_item, sf::Vector2f(500.f, 210.f)));
@@ -52,7 +64,7 @@ void Game::newGame()
 
    pos = sf::Vector2f(250, 250);
    FixedObject* object = new FixedObject(m_texture_manager.get(TEX_TREE1), pos, sf::Vector2f(31, 115));
-   collision_item->shape.sphere = { 6 / 2, pos.x, pos.y };
+   collision_item->shape.sphere = { pos.x, pos.y, 10 };
    collision_item->material_type = MT_Tree;
    m_world.add(collision_item);
    g_renderables.push_back(&object->getSprite());
@@ -79,39 +91,44 @@ void Game::update(sf::Time elapsed_time) {
    // two approaches:
    // - update position and check collision afterwards
    // - check line from old to new position
-   sf::Vector2f pos = bomba->getPosition();
-   sf::Vector2f target = pos + bomba->getSpeed();
-   CollisionInfo collision;
-   if (m_world.checkSingleCollision(pos, target, collision))
+   if (math::length(bomba->getSpeed()) > 0)
    {
-      if (collision.item1->material_type == MT_Barrel)
+      sf::Vector2f pos = bomba->getPosition();
+      sf::Vector2f target = pos + bomba->getSpeed();
+      CollisionInfo collision;
+      if (m_world.checkSingleCollision(pos, target, collision))
       {
-         assert(false);//not implemented
-      }
-      // blocking objects
-      else
-      {
-         float collision_distance = math::distance(pos, collision.point);
-         if (collision_distance > bomba->getRadius())
+         if (collision.item1->material_type == MT_Barrel)
          {
-            // adjust hero position
-            sf::Vector2f offset = target - pos;
-            math::set_length(offset, collision_distance - 1);
-            pos += offset;
+            assert(false);//not implemented
          }
-         // else don't move
-      }
+         // blocking objects
+         else
+         {
+            float collision_distance = math::distance(pos, collision.point);
+            if (collision_distance > bomba->getRadius())
+            {
+               // adjust hero position
+               sf::Vector2f offset = target - pos;
+               math::set_length(offset, collision_distance - 1);
+               pos += offset;
+               bomba->setPosition(target);
+            }
+            // else don't move
+         }
 
-      //if (collision.item2->material_type == 1)  // water
-      //{
-      //   // block
-      //}
-      //else if (collision.item2->material_type == 3)// wall
-      //{
-      //   // slide
-      //}
+         //if (collision.item2->material_type == 1)  // water
+         //{
+         //   // block
+         //}
+         //else if (collision.item2->material_type == 3)// wall
+         //{
+         //   // slide
+         //}
+      }
+      else
+         bomba->setPosition(target);
    }
-   bomba->setPosition(target);
    bomba->update(elapsed_time);
    //kurwinox->update(elapsed_time);
 
@@ -121,7 +138,7 @@ void Game::update(sf::Time elapsed_time) {
    //   // todo graphic data
    //   CollisionItem collision_item{};
    //   collision_item.shape.type = CollisionShapeType::Sphere;
-   //   collision_item.shape.sphere = { radius, x, y };
+   //   collision_item.shape.sphere = { x, y, radius };
    //   collision_item.material_type = 5;// todo prepare material list e.g. water, wall, pickable objects etc.
    //   m_world.add(collision_item);
    //   // todo game object (keeps graphic data and shape data reference)
