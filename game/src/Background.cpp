@@ -38,5 +38,27 @@ void Background::update(sf::Time elapsed_time) {
 }
 
 bool Background::isWater(int x, int y) {
-   return true;
+   if (checkField(x, y)) {
+      return m_sprites[y][x].getTextureRect().top > 0;
+   }
+   return false;
+}
+
+void Background::setColor(const sf::Color& color, int x, int y) {
+   if (checkField(x, y)) {
+      m_sprites[y][x].setColor(color);
+   }
+}
+sf::Color Background::getColor(int x, int y) {
+   if (checkField(x, y)) {
+      return m_sprites[y][x].getColor();
+   }
+   return sf::Color(0, 0, 0);
+}
+
+bool Background::checkField(int x, int y) {
+   if (m_sprites.size() > y && m_sprites[y].size() > x) {
+      return true;
+   }
+   return false;
 }

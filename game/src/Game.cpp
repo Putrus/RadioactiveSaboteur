@@ -59,10 +59,15 @@ void Game::newGame()
    {
       for (int x = 0; x < 64; ++x)
       {
+         if (m_background.isWater(x, y)) {
 
-         int type = rand() % 8;
-
+         }
+         bool is_water_one_above = m_background.isWater(x, y - 1);
+         int type = m_background.isWater(x-1, y) || is_water_one_above ? rand() % 12 : rand() % 8;
          sf::IntRect source_rect(30 * (type % 7), 30 * (type / 7), 30, 30);
+         if (source_rect.top != 0 && is_water_one_above) {
+            source_rect.top += 30;
+         }
          sf::Vector2f target_position(x * 30, y * 30);
          sf::IntRect target_rect(target_position.x, target_position.y, 30, 30);
          if (type < 900)

@@ -14,6 +14,11 @@ public:
    void addSprite(const sf::Texture& texture, const sf::IntRect& rect, const sf::Vector2f& position);
    void update(sf::Time elapsed_time);
    bool isWater(int x, int y);
+   void setColor(const sf::Color& color, int x, int y);
+   sf::Color getColor(int x, int y);
+
+private:
+   bool checkField(int x, int y);
 
 private:
    std::vector<std::vector<sf::Sprite>> m_sprites;
