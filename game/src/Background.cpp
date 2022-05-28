@@ -44,7 +44,7 @@ bool Background::isWater(int x, int y) {
    return false;
 }
 
-void Background::setColor(const sf::Color& color, int x, int y) {
+void Background::setColor(int x, int y, const sf::Color& color) {
    if (checkField(x, y)) {
       m_sprites[y][x].setColor(color);
    }
@@ -62,3 +62,23 @@ bool Background::checkField(int x, int y) {
    }
    return false;
 }
+
+void Background::contaminateArea(int embryo_x, int embryo_y, const sf::Color& contaminate_color) {
+   contaminateArea(embryo_x, embryo_y, contaminate_color, -1, 0);
+   contaminateArea(embryo_x, embryo_y, contaminate_color, 1, 0);
+   contaminateArea(embryo_x, embryo_y, contaminate_color, 0, -1);
+   contaminateArea(embryo_x, embryo_y, contaminate_color, 0, 1);
+}
+
+void Background::contaminateArea(int embryo_x, int embryo_y, const sf::Color& contaminate_color, int increment_x, int increment_y) {
+   int x = embryo_x;
+   int y = embryo_y;
+   while (getColor(x, y) == contaminate_color) {
+      x += increment_x;
+      y += increment_y;
+   }
+   setColor(x, y, contaminate_color);
+   setColor(x - increment_y, y - increment_x, contaminate_color);
+   setColor(x + increment_y, y + increment_x, contaminate_color);
+}
+

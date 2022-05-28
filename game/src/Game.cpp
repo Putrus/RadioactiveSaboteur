@@ -219,6 +219,7 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, bool player) 
          || event.key.code == controls[2] && hero.getSpeed().x < 0
          || event.key.code == controls[3] && hero.getSpeed().x > 0) {
          hero.setAction(Action::IDLE);
+         m_background.contaminateArea(10, 10, sf::Color(150, 255, 150));
       }
       break;
    }
