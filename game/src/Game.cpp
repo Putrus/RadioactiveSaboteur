@@ -59,7 +59,9 @@ void Game::newGame()
    {
       for (int x = 0; x < 64; ++x)
       {
+
          int type = rand() % 8;
+
          sf::IntRect source_rect(30 * (type % 7), 30 * (type / 7), 30, 30);
          sf::Vector2f target_position(x * 30, y * 30);
          sf::IntRect target_rect(target_position.x, target_position.y, 30, 30);
@@ -151,6 +153,7 @@ void Game::update(sf::Time elapsed_time) {
          bomba->setPosition(target);
    }
    bomba->update(elapsed_time);
+   m_background.update(elapsed_time);
    //kurwinox->update(elapsed_time);
 
    // add new barrel
