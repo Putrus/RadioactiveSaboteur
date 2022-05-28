@@ -4,7 +4,7 @@
 #include "ResourceHolder.h"
 
 enum TextureID {
-   TEX_HERO1, TEX_HERO2, TEX_TREE1
+   TEX_HERO1, TEX_HERO2, TEX_TREE1, TEX_BACKGROUND
 };
 
 typedef ResourceHolder<sf::Texture, TextureID> TextureHolder;

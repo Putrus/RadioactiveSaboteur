@@ -151,12 +151,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Background.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Hero.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\World.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Background.h" />
     <ClInclude Include="include\FixedObject.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Hero.h" />
