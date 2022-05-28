@@ -17,7 +17,7 @@ struct CollisionShape
 	{
 		struct AABB
 		{
-			float left, rigth, top, bottom;
+			float left, right, top, bottom;
 		} aabb;
 		struct Sphere
 		{

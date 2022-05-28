@@ -23,9 +23,9 @@ void World::remove(const CollisionItem& collision_item)
 
 bool handleCollisionOfTwoAABB(const CollisionItem& aabb1, const CollisionItem& aabb2, CollisionInfo& result)
 {
-   if (aabb1.shape.aabb.rigth > aabb2.shape.aabb.left && aabb1.shape.aabb.rigth < aabb2.shape.aabb.rigth)
+   if (aabb1.shape.aabb.right > aabb2.shape.aabb.left && aabb1.shape.aabb.right < aabb2.shape.aabb.right)
       return true;
-   if (aabb1.shape.aabb.left > aabb2.shape.aabb.left && aabb1.shape.aabb.left < aabb2.shape.aabb.rigth)
+   if (aabb1.shape.aabb.left > aabb2.shape.aabb.left && aabb1.shape.aabb.left < aabb2.shape.aabb.right)
       return true;
    if (aabb1.shape.aabb.bottom > aabb2.shape.aabb.top && aabb1.shape.aabb.bottom < aabb2.shape.aabb.bottom)
       return true;
