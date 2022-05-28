@@ -12,7 +12,11 @@ enum Action {
    DOWN,
    RIGHT,
    LEFT,
-   UP
+   UP,
+   UPLEFT,
+   UPRIGHT,
+   DOWNLEFT,
+   DOWNRIGHT
 };
 
 class Hero

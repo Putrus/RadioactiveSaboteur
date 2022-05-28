@@ -1,5 +1,7 @@
 #include "../include/Hero.h"
 
+#define SQRT2 1.41f
+
 Hero::Hero(sf::Texture& texture, /*CollisionItem &collision_item, */sf::Vector2f position) : 
    m_sprite(texture), m_speed(0.f, 0.f), m_action(Action::IDLE), m_animation_delay(0.f), m_animation_speed(0.2f) {
    // idle - [0,0]
@@ -45,6 +47,30 @@ void Hero::setAction(Action action) {
    case Action::UP:
    {
       m_speed = sf::Vector2f(0.0f, -hero_speed);
+      break;
+   }
+   case Action::UPLEFT:
+   {
+      m_speed = sf::Vector2f(-hero_speed / SQRT2, -hero_speed / SQRT2);
+      m_action = UP;
+      break;
+   }
+   case Action::UPRIGHT:
+   {
+      m_speed = sf::Vector2f(hero_speed / SQRT2, -hero_speed / SQRT2);
+      m_action = UP;
+      break;
+   }
+   case Action::DOWNLEFT:
+   {
+      m_speed = sf::Vector2f(-hero_speed / SQRT2, hero_speed / SQRT2);
+      m_action = DOWN;
+      break;
+   }
+   case Action::DOWNRIGHT:
+   {
+      m_speed = sf::Vector2f(hero_speed / SQRT2, hero_speed / SQRT2);
+      m_action = DOWN;
       break;
    }
    }

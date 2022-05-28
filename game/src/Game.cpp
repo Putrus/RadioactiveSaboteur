@@ -58,6 +58,7 @@ void Game::processEvents() {
          m_window.close();
          break;
       }
+      //to do change it to sf::Keyboard
       case sf::Event::KeyReleased:
       {
          if (event.key.code == sf::Keyboard::W && m_hero1->getSpeed().y < 0
@@ -70,17 +71,41 @@ void Game::processEvents() {
       }
       case sf::Event::KeyPressed:
       {
-         if (event.key.code == sf::Keyboard::W) {
-            m_hero1->setAction(Action::UP);
+         if (m_hero1->getSpeed().y <= 0 && event.key.code == sf::Keyboard::W) {
+            if (m_hero1->getSpeed().x < 0)
+               m_hero1->setAction(Action::UPLEFT);
+            else if (m_hero1->getSpeed().x > 0)
+               m_hero1->setAction(Action::UPRIGHT);
+            else
+               m_hero1->setAction(Action::UP);
+            break;
          }
-         if (event.key.code == sf::Keyboard::S) {
-            m_hero1->setAction(Action::DOWN);
+         if (m_hero1->getSpeed().y >= 0 && event.key.code == sf::Keyboard::S) {
+            if (m_hero1->getSpeed().x < 0)
+               m_hero1->setAction(Action::DOWNLEFT);
+            else if (m_hero1->getSpeed().x > 0)
+               m_hero1->setAction(Action::DOWNRIGHT);
+            else
+               m_hero1->setAction(Action::DOWN);
+            break;
          }
-         if (event.key.code == sf::Keyboard::A) {
-            m_hero1->setAction(Action::LEFT);
+         if (m_hero1->getSpeed().x <= 0 && event.key.code == sf::Keyboard::A) {
+            if (m_hero1->getSpeed().y < 0)
+               m_hero1->setAction(Action::UPLEFT);
+            else if (m_hero1->getSpeed().y > 0)
+               m_hero1->setAction(Action::DOWNLEFT);
+            else
+               m_hero1->setAction(Action::LEFT);
+            break;
          }
-         if (event.key.code == sf::Keyboard::D) {
-            m_hero1->setAction(Action::RIGHT);
+         if (m_hero1->getSpeed().x >= 0 && event.key.code == sf::Keyboard::D) {
+            if (m_hero1->getSpeed().y < 0)
+               m_hero1->setAction(Action::UPRIGHT);
+            else if (m_hero1->getSpeed().y > 0)
+               m_hero1->setAction(Action::DOWNRIGHT);
+            else
+               m_hero1->setAction(Action::RIGHT);
+            break;
          }
          break;
       }
@@ -93,7 +118,7 @@ void Game::update(sf::Time elapsed_time) {
 
    // handle players move
    //CollisionInfo collision;
-   //// two approaches: update position and check collision or check line from old to new position
+   //// two approaches: Action::UPdate position and check collision or check line from old to new position
    //if (m_world.checkSingleCollision(player1.collision_item, collision))
    //{
    //   if (collision.item2->material_type == 1)  // water
