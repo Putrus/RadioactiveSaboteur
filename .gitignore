@@ -2,6 +2,7 @@
 *.db
 *.opendb
 *.user
+*.orig
 
 bin
 external
