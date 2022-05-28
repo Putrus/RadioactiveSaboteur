@@ -60,13 +60,15 @@ void Game::newGame()
       for (int x = 0; x < 64; ++x)
       {
          int type = rand() % 8;
-         sf::IntRect rect(30 * (type % 7), 30 * (type / 7), 30, 30);
+         sf::IntRect source_rect(30 * (type % 7), 30 * (type / 7), 30, 30);
+         sf::Vector2f target_position(x * 30, y * 30);
+         sf::IntRect target_rect(target_position.x, target_position.y, 30, 30);
          if (type < 900)
-            m_background.addSprite(bkg, rect);
+            m_background.addSprite(bkg, source_rect, target_position);
          else
          {
-            m_background.addSprite(bkg, rect);
-            create_water_collision_item(rect);
+            m_background.addSprite(bkg, source_rect, target_position);
+            create_water_collision_item(target_rect);
          }
       }
    }
@@ -189,6 +191,7 @@ void Game::loadResources() {
    m_texture_manager.load(TEX_HERO1, (data_path + "HERO1.png").c_str());
    m_texture_manager.load(TEX_HERO2, (data_path + "HERO2.png").c_str());
    m_texture_manager.load(TEX_TREE1, (data_path + "tree_1.png").c_str());
+   m_texture_manager.load(TEX_BACKGROUND, (data_path + "BACKGROUND.png").c_str());
 }
 
 void Game::processPlayerEvents(Hero& hero, const sf::Event& event, bool player) {
