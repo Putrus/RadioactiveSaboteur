@@ -79,6 +79,7 @@ public:
 	bool checkSingleCollision(const CollisionItem* object, CollisionInfo& result) const;
 	bool checkSingleCollision(sf::Vector2f line_p1, sf::Vector2f line_p2, CollisionInfo& result) const;
 	bool checkSingleCollision(const AABB& aabb, CollisionInfo& result) const;
+	int checkManyCollisions(const AABB& aabb, CollisionInfo* results, int results_max) const;
 
 private:
 	std::vector<CollisionItem*> m_collision_items;
