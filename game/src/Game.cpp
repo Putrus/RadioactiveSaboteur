@@ -11,17 +11,27 @@ Must have:
 x respawn barrel only if it was dropped first time (ignore moved barrels)
 x second player
 x second player: button for dropping item (first player uses space)
-- calculate statistics & win/lose
+x calculate statistics & win/lose
+- block input and show info when someone wins
+- barrel is dropped and picked up again - contamination source should change its position
 
 Optional:
 - menu
 x slow down in water
-- comtaminate area - improve
+- comtaminate area - improve (rounded area)
 - rendering: sort by y value
 */
 
+constexpr int PLAYER_COUNT = 2;
+// If you want to change it see also background_field_rows/background_field_columns
+constexpr int WINDOW_WIDTH = 1024;
+constexpr int WINDOW_HEIGHT = 800;
+
 struct HardcodedSettings
 {
+   int winning_points_in_round = 30;
+   int winning_rounds = 1;
+
    float hero_aabb_size = 32;
    //sf::Vector2f barrel_origin(30, 30);
    float barrel_origin_x = 30;
@@ -34,17 +44,19 @@ struct ConstantPlayerSettings
 {
    sf::Vector2f start_position;
    sf::Vector2f barrel_spawn_location;
+   std::string name;
 } player_settings[2];
 
 struct PlayerStats
 {
    int total_wins = 0;
-} player_stats[2];
+   int current_score = 0;
+} player_stats[PLAYER_COUNT];
 
 
 Game::Game(const std::string& root_path) :
    m_root_path(root_path),
-   m_window(sf::VideoMode(1024, 800), "Radioactive Saboteur", sf::Style::Fullscreen), m_time_per_frame(sf::seconds(1.f / 60.f)),
+   m_window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Radioactive Saboteur", sf::Style::Fullscreen), m_time_per_frame(sf::seconds(1.f / 60.f)),
    m_print_debug_info(false),
    m_bomba_collider(nullptr),
    m_kurvinox_collider(nullptr)
@@ -57,6 +69,8 @@ Game::Game(const std::string& root_path) :
 
    player_settings[0].start_position = sf::Vector2f(20, 20);
    player_settings[1].start_position = sf::Vector2f(780, 20);
+   player_settings[0].name = "K. Bomba";
+   player_settings[1].name = "Domino";//"Micha³ G³uœ";
    player_settings[0].barrel_spawn_location = sf::Vector2f(50, 300);
    player_settings[1].barrel_spawn_location = sf::Vector2f(750, 300);
 }
@@ -86,6 +100,12 @@ void Game::run() {
 
 void Game::newGame()
 {
+   for (int idx = 0; idx < PLAYER_COUNT; ++idx)
+   {
+      player_stats[idx].total_wins = 0;
+      player_stats[idx].current_score = 0;
+   }
+
    auto create_water_collision_item = [this](const sf::IntRect &rect)
    {
       CollisionItem* collision_item = new CollisionItem;
@@ -101,9 +121,9 @@ void Game::newGame()
    srand(time(0));
    sf::Texture &bkg = m_texture_manager.get(TEX_BACKGROUND);
 
-   for (int y = 0; y < 36; ++y)
+   for (int y = 0; y < background_field_rows; ++y)
    {
-      for (int x = 0; x < 64; ++x)
+      for (int x = 0; x < background_field_columns; ++x)
       {
          bool is_water_one_above = m_background.isWater(x, y - 1);
          int type = m_background.isWater(x-1, y) || is_water_one_above ? rand() % 12 : rand() % 8;
@@ -165,8 +185,10 @@ void Game::newGame()
    m_world.add(collision_item);
    m_renderables.push_back(&object->getSprite());
 
-   addNewBarrel(player_settings[0].barrel_spawn_location);
-   addNewBarrel(player_settings[1].barrel_spawn_location);
+   for (int idx = 0; idx < PLAYER_COUNT; ++idx)
+   {
+      addNewBarrel(player_settings[idx].barrel_spawn_location);
+   }
 }
 
 void Game::processEvents() {
@@ -277,6 +299,33 @@ void Game::update(sf::Time elapsed_time) {
    
    m_menu->update(sf::Mouse::getPosition(m_window));
    m_background.update(elapsed_time);
+
+   // check end conditions
+   // General info:
+   // This way of calculation makes sense only in case of two players. For more consider
+   // points for contaminating enemies and negative points for being contaminated.
+   for (int idx = 0; idx < PLAYER_COUNT; ++idx)
+   {
+      player_stats[idx].current_score = m_background.getContaminationCount(PLAYER_COUNT - idx - 1);
+   }
+
+   bool end_of_round = std::any_of(std::begin(player_stats), std::end(player_stats), [](const PlayerStats& stat)
+      {
+         return stat.current_score >= hardcoded.winning_points_in_round;
+      });
+
+   if (end_of_round)
+   {
+      auto it = std::max_element(std::begin(player_stats), std::end(player_stats),
+         [](const PlayerStats& stat1, const PlayerStats& stat2)
+         {
+            return stat1.current_score < stat2.current_score;
+         });
+
+      int winner = std::distance(it, std::begin(player_stats));
+      // block input, show info
+      // todo
+   }
 }
 
 void Game::render() {
@@ -294,6 +343,18 @@ void Game::render() {
       {
          m_window.draw(*drawable);
       }
+
+   for (int idx = 0; idx < PLAYER_COUNT; ++idx)
+   {
+      std::string score_text = player_settings[idx].name + ": " + std::to_string(player_stats[idx].current_score);
+      sf::Text text;
+      text.setFont(m_debug_font);
+      text.setString(score_text);
+      text.setCharacterSize(24); // in pixels, not points!
+      text.setFillColor(sf::Color::Green);
+      text.setPosition(WINDOW_WIDTH / 3 + 200 * idx, WINDOW_HEIGHT - 30);
+      m_window.draw(text);
+   }
 
       if (m_print_debug_info)
       {
@@ -413,7 +474,7 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, int player) {
             if (action == Action::IDLE)
                action = hero.getPreviousAction();
 
-            static const Action opposite_directions[] =
+            static const Action reversed_actions[] =
             {
                IDLE,    //IDLE = 0,
                UP,      //DOWN,
@@ -426,15 +487,17 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, int player) {
                UPLEFT,     //DOWNRIGHT
             };
             sf::Vector2f new_position;
-            Action reversed_action = opposite_directions[action];
+            // barrel is dropped behind player; uncomment it to drop it in the front - player must stop;
+            // otherwise barrel is picked up again
+            //Action action = reversed_actions[action];
             float off_x = 0, off_y = 0;
-            if (reversed_action == LEFT || reversed_action == DOWNLEFT || reversed_action == UPLEFT)
+            if (action == LEFT || action == DOWNLEFT || action == UPLEFT)
                off_x = -hardcoded.hero_aabb_size;
-            else if (reversed_action == RIGHT || reversed_action == DOWNRIGHT || reversed_action == UPRIGHT)
+            else if (action == RIGHT || action == DOWNRIGHT || action == UPRIGHT)
                off_x = hardcoded.hero_aabb_size;
-            if (reversed_action == UP || reversed_action == UPLEFT || reversed_action == UPRIGHT)
+            if (action == UP || action == UPLEFT || action == UPRIGHT)
                off_y = -hardcoded.hero_aabb_size;
-            else if (reversed_action == DOWN || reversed_action == DOWNLEFT || reversed_action == DOWNRIGHT)
+            else if (action == DOWN || action == DOWNLEFT || action == DOWNRIGHT)
                off_y = hardcoded.hero_aabb_size;
 
             new_position = barrel->getPosition() + sf::Vector2f(off_x, off_y);
@@ -444,13 +507,16 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, int player) {
                   barrel->getPosition().y - hardcoded.barrel_origin_y / 2,
                   hardcoded.barrel_origin_x, hardcoded.barrel_origin_y);
             m_world.add(&barrel->getCollisionItem());
+            // only when dropped first time
             if (!barrel->isTouched())
+            {
                addNewBarrel(player_settings[player].barrel_spawn_location);
-            // radioactivity 3..2..1
-            std::pair<int, int> origin_field = m_background.getField(barrel->getPosition());
-            m_background.addContaminateSource(origin_field.first, origin_field.second,
-               hardcoded.comtaminate_color, hardcoded.comtaminate_cycles);
-            barrel->touch();
+               // radioactivity 3..2..1
+               std::pair<int, int> origin_field = m_background.getField(barrel->getPosition());
+               m_background.addContaminateSource(origin_field.first, origin_field.second,
+                  hardcoded.comtaminate_color, hardcoded.comtaminate_cycles);
+               barrel->touch();
+            }
          }
       }
       break;

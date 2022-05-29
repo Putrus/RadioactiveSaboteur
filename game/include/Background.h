@@ -7,6 +7,10 @@
 constexpr int background_field_size = 30;
 constexpr int background_texture_width = 210;
 
+constexpr int background_field_rows = 36;
+constexpr int background_field_columns = 64;
+
+
 class Background {
 public:
    Background();
@@ -20,10 +24,27 @@ public:
    sf::Color getColor(int x, int y);
    void contaminateArea(int embryo_x, int embryo_y, const sf::Color& contaminate_color);
    void addContaminateSource(int embryo_x, int embryo_y, const sf::Color& contaminate_color, int iterations);
+   /// Get number of contaminated fields for given half-part (0: left, 1: right)
+   int getContaminationCount(int part);
 
 private:
    bool checkField(int x, int y);
    void contaminateArea(int embryo_x, int embryo_y, const sf::Color& contaminate_color, int increment_x, int increment_y);
+   void setFieldState(int x, int y, int state) {
+      //if (x < background_field_columns && y < background_field_rows)
+      {
+         //int index = y * background_field_columns + x;
+         //m_field_states[index] = state;
+         m_field_states[y][x] = state;
+      }
+      //else
+      //   assert(false);
+   }
+   int getFieldState(int x, int y) {
+      //int index = y * background_field_columns + x;
+      //return m_field_states[index];
+      return m_field_states[y][x];
+   }
 
 private:
    struct ContaminateSource
@@ -36,6 +57,8 @@ private:
    };
 
    std::vector<std::vector<sf::Sprite>> m_sprites;
+   //int m_field_states[background_field_rows * background_field_columns];
+   int m_field_states[background_field_rows][background_field_columns];
    std::vector<ContaminateSource> m_contaminate_sources;
 
    float m_animation_delay;
