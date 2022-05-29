@@ -28,6 +28,9 @@ void Background::addSprite(const sf::Texture& texture, const sf::IntRect& rect, 
    if (m_sprites.empty() || m_sprites.back().size() == background_field_columns) {
       m_sprites.push_back(std::vector<sf::Sprite>());
    }
+   if (m_sprites.back().size() >= (background_field_columns / 2)) {
+      sprite.setColor(sf::Color(230, 230, 255));
+   }
    m_sprites.back().push_back(sprite);
 }
 
