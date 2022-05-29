@@ -81,7 +81,7 @@ void Game::run() {
    // todo connect with menu handler at the end!
    loadResources();
    m_menu.reset(new Menu(m_texture_manager.get(TEX_MENU)));
-   //m_menu->setVisible(false);
+   m_menu->setVisible(false);
    newGame();
 
    //game loop
