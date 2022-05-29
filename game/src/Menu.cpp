@@ -15,7 +15,7 @@ void Menu::draw(sf::RenderWindow& window) {
    window.draw(m_credits->getSprite());
 }
 
-void Menu::update(sf::Vector2i mouse_position) {
+void Menu::update(const sf::Vector2i mouse_position) {
    m_start->advise(mouse_position);
    m_credits->advise(mouse_position);
    m_exit->advise(mouse_position);

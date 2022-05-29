@@ -5,7 +5,6 @@
 
 #include <SFML/Graphics.hpp>
 #include <cassert>
-#include <iostream>
 
 /*
 Must have:
@@ -68,6 +67,7 @@ void Game::run() {
    // todo connect with menu handler at the end!
    loadResources();
    m_menu.reset(new Menu(m_texture_manager.get(TEX_MENU)));
+   //m_menu->setVisible(false);
    newGame();
 
    //game loop
@@ -187,7 +187,6 @@ void Game::processEvents() {
       case sf::Event::MouseButtonPressed:
       {
          if (event.key.code == sf::Mouse::Left) {
-            std::cout << sf::Mouse::getPosition().x << " " << sf::Mouse::getPosition().y << std::endl;
          }
       }
       //to do change it to sf::Keyboard
