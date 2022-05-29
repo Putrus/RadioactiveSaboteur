@@ -11,6 +11,7 @@ Hero::Hero(sf::Texture& texture, CollisionItem &collision_item, sf::Vector2f pos
    m_backpack_object(nullptr),
    m_speed(0.f, 0.f),
    m_action(Action::IDLE),
+   m_previous_action(Action::IDLE),
    m_animation_delay(0.f),
    m_animation_speed(0.2f)
 {
@@ -51,7 +52,18 @@ sf::Sprite& Hero::getSprite()
    return m_sprite;
 }
 
+Action Hero::getPreviousAction() const
+{
+   return m_previous_action;
+}
+
+Action Hero::getAction() const
+{
+   return m_action;
+}
+
 void Hero::setAction(Action action) {
+   m_previous_action = m_action;
    m_action = action;
    switch (action) {
    case Action::IDLE:

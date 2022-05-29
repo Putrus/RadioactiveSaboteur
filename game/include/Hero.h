@@ -34,6 +34,8 @@ public:
    sf::Vector2f getPosition() const;
    void setPosition(const sf::Vector2f& position);
    sf::Sprite& getSprite();
+   Action getPreviousAction() const;
+   Action getAction() const;
    void setAction(Action action);
    void update(sf::Time elapsed_time);
    sf::Vector2f getSpeed() const;
@@ -49,6 +51,7 @@ private:
    float m_radius;
    sf::Vector2f m_speed;
    Action m_action;
+   Action m_previous_action;
    sf::Time m_last_animation_frame_time;
    
    float m_animation_delay;
