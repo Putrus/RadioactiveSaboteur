@@ -3,6 +3,12 @@
 Background::Background() : m_animation_delay(0.f), m_animation_speed(0.2f) {
 }
 
+std::pair<int, int> Background::getField(sf::Vector2f position) {
+   int first = position.x / background_field_size;
+   int second = position.y / background_field_size;
+   return std::make_pair(first, second);
+}
+
 void Background::draw(sf::RenderWindow& window) const {
    for (auto& sprites : m_sprites) {
       for (auto& sprite : sprites) {
@@ -22,18 +28,42 @@ void Background::addSprite(const sf::Texture& texture, const sf::IntRect& rect, 
 }
 
 void Background::update(sf::Time elapsed_time) {
-   m_animation_delay += elapsed_time.asSeconds();
+   float elapsed_seconds = elapsed_time.asSeconds();
+   m_animation_delay += elapsed_seconds;
    if (m_animation_delay > m_animation_speed) {
       m_animation_delay -= m_animation_speed;
       for (auto& sprites : m_sprites) {
          for (auto& sprite : sprites) {
             if (sprite.getTextureRect().top > 0) {
                sf::IntRect rect = sprite.getTextureRect();
-               sprite.setTextureRect(sf::IntRect((sprite.getTextureRect().left + background_frame_size) % background_texture_width,
-                  sprite.getTextureRect().top, background_frame_size, background_frame_size));
+               sprite.setTextureRect(sf::IntRect((sprite.getTextureRect().left + background_field_size) % background_texture_width,
+                  sprite.getTextureRect().top, background_field_size, background_field_size));
             }
          }
       }
+   }
+
+   // comtaminate
+   constexpr float COMTAMINATE_SECOND_INTERVAL = 10;
+   for (auto it = m_contaminate_sources.begin(); it != m_contaminate_sources.end();)
+   {
+      ContaminateSource& source = *it;
+      source.time_since_last_leak += elapsed_seconds;
+      if (source.time_since_last_leak > COMTAMINATE_SECOND_INTERVAL)
+      {
+         contaminateArea(source.origin.first, source.origin.second, source.color);
+         source.time_since_last_leak -= COMTAMINATE_SECOND_INTERVAL;
+         --source.remaining_cycles;
+
+         if (source.remaining_cycles <= 0)
+         {
+            it = m_contaminate_sources.erase(it);
+         }
+         else
+            ++it;
+      }
+      else
+         ++it;
    }
 }
 
@@ -82,3 +112,13 @@ void Background::contaminateArea(int embryo_x, int embryo_y, const sf::Color& co
    setColor(x + increment_y, y + increment_x, contaminate_color);
 }
 
+void Background::addContaminateSource(int embryo_x, int embryo_y, const sf::Color& contaminate_color, int iterations)
+{
+   ContaminateSource source;
+   source.origin = std::make_pair(embryo_x, embryo_y);
+   source.color = contaminate_color;
+   source.remaining_cycles = iterations;
+   //source.second_interval = ;
+   source.time_since_last_leak = 0;
+   m_contaminate_sources.emplace_back(source);
+}

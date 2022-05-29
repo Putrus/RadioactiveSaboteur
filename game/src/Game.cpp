@@ -6,16 +6,58 @@
 #include <SFML/Graphics.hpp>
 #include <cassert>
 
+/*
+Must have:
+- ignore barrel when dropped
+x second player
+- second player: button for dropping item (first player uses space)
+- calculate statistics & win/lose
+
+Optional:
+- menu
+- slow down in water
+- comtaminate area - improve
+- rendering: sort by y value
+*/
+
+struct HardcodedSettings
+{
+   //sf::Vector2f barrel_origin(30, 30);
+   float barrel_origin_x = 30;
+   float barrel_origin_y = 30;
+   int comtaminate_cycles = 3;
+   sf::Color comtaminate_color = sf::Color(150, 255, 150);
+} hardcoded;
+
+struct ConstantPlayerSettings
+{
+   sf::Vector2f start_position;
+   sf::Vector2f barrel_spawn_location;
+} player_settings[2];
+
+struct PlayerStats
+{
+   int total_wins = 0;
+} player_stats[2];
+
+
 Game::Game(const std::string& root_path) :
    m_root_path(root_path),
    m_window(sf::VideoMode(1024, 800), "Radioactive Saboteur"), m_time_per_frame(sf::seconds(1.f / 60.f)),
-   m_print_debug_info(false)
+   m_print_debug_info(false),
+   m_bomba_collider(nullptr),
+   m_kurvinox_collider(nullptr)
 {
    if (m_root_path.size() > 0)
    {
       if (m_root_path.back() != '/' && m_root_path.back() != '\\')
          m_root_path += '\\';
    }
+
+   player_settings[0].start_position = sf::Vector2f(20, 20);
+   player_settings[1].start_position = sf::Vector2f(780, 20);
+   player_settings[0].barrel_spawn_location = sf::Vector2f(50, 300);
+   player_settings[1].barrel_spawn_location = sf::Vector2f(750, 300);
 }
 
 void Game::run() {
@@ -65,12 +107,14 @@ void Game::newGame()
          }
          bool is_water_one_above = m_background.isWater(x, y - 1);
          int type = m_background.isWater(x-1, y) || is_water_one_above ? rand() % 12 : rand() % 8;
-         sf::IntRect source_rect(30 * (type % 7), 30 * (type / 7), 30, 30);
+         sf::IntRect source_rect(
+            background_field_size * (type % 7), background_field_size * (type / 7),
+            background_field_size, background_field_size);
          if (source_rect.top != 0 && is_water_one_above) {
-            source_rect.top += 30;
+            source_rect.top += background_field_size;
          }
-         sf::Vector2f target_position(x * 30, y * 30);
-         sf::IntRect target_rect(target_position.x, target_position.y, 30, 30);
+         sf::Vector2f target_position(x * background_field_size, y * background_field_size);
+         sf::IntRect target_rect(target_position.x, target_position.y, background_field_size, background_field_size);
          if (type < 900)
             m_background.addSprite(bkg, source_rect, target_position);
          else
@@ -81,26 +125,33 @@ void Game::newGame()
       }
    }
 
-   //sf::Vector2f pos(10, 10);
-   //CollisionItem *collision_item = new CollisionItem;
-   //collision_item->shape.type = CollisionShapeType::Sphere;
-   //collision_item->shape.sphere = { pos.x, pos.y, frame_size / 2 };
-   //collision_item->material_type = MT_Hero;
-   //bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), *collision_item, sf::Vector2f(10.f, 10.f)));
-   ////kurvinox.reset(new Hero(m_texture_manager.get(TEX_HERO2), *collision_item, sf::Vector2f(500.f, 210.f)));
-   //g_renderables.push_back(&bomba->getSprite());
-   ////g_renderables.push_back(&kurwinox->getSprite());
-   sf::Vector2f pos(10, 10);
-   m_bomba_collider = new CollisionItem;
-   m_bomba_collider->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
-   m_bomba_collider->shape.aabb = make_aabb(pos.x - 16, pos.y - 16, 32, 32);
-   m_bomba_collider->material_type = MT_Hero;
-   bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), *m_bomba_collider, pos));
-   //kurvinox.reset(new Hero(m_texture_manager.get(TEX_HERO2), *collision_item, sf::Vector2f(500.f, 210.f)));
-   g_renderables.push_back(&bomba->getSprite());
-   //g_renderables.push_back(&kurwinox->getSprite());
+   auto add_player = [this](int player_index, int texture_id, 
+      std::unique_ptr<Hero> &target_hero, CollisionItem** collision_item_target)
+   {
+      //sf::Vector2f pos(10, 10);
+      //CollisionItem *collision_item = new CollisionItem;
+      //collision_item->shape.type = CollisionShapeType::Sphere;
+      //collision_item->shape.sphere = { pos.x, pos.y, frame_size / 2 };
+      //collision_item->material_type = MT_Hero;
+      //target_hero.reset(new Hero(m_texture_manager.get(TEX_HERO1), *collision_item, sf::Vector2f(10.f, 10.f)));
+      ////kurvinox.reset(new Hero(m_texture_manager.get(TEX_HERO2), *collision_item, sf::Vector2f(500.f, 210.f)));
+      //m_renderables.push_back(&target_hero->getSprite());
+      ////m_renderables.push_back(&kurwinox->getSprite());
+      sf::Vector2f pos = player_settings[player_index].start_position;
+      auto *collision_item = new CollisionItem;
+      collision_item->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
+      collision_item->shape.aabb = make_aabb(pos.x - 16, pos.y - 16, 32, 32);
+      collision_item->material_type = MT_Hero;
+      target_hero.reset(new Hero(m_texture_manager.get(TextureID(texture_id)), *collision_item, pos));
+      m_renderables.push_back(&target_hero->getSprite());
+      *collision_item_target = collision_item;
+   };
+   // bomba
+   add_player(0, TEX_HERO1, bomba, &m_bomba_collider);
+   add_player(1, TEX_HERO2, kurwinox, &m_kurvinox_collider);
 
-   pos = sf::Vector2f(250, 250);
+   // tree
+   sf::Vector2f pos = sf::Vector2f(250, 250);
    CollisionItem* collision_item = new CollisionItem;
    FixedObject* object = new FixedObject(m_texture_manager.get(TEX_TREE1),
       *collision_item, pos, sf::Vector2f(31, 115));
@@ -110,9 +161,9 @@ void Game::newGame()
    //collision_item->shape.sphere = { pos.x, pos.y, 10 };
    collision_item->material_type = MT_Tree;
    m_world.add(collision_item);
-   g_renderables.push_back(&object->getSprite());
+   m_renderables.push_back(&object->getSprite());
 
-   addNewBarrel(sf::Vector2f(50, 300));
+   addNewBarrel(player_settings[0].barrel_spawn_location);
 }
 
 void Game::processEvents() {
@@ -133,21 +184,22 @@ void Game::processEvents() {
       //to do change it to sf::Keyboard
       }
       processPlayerEvents(*bomba, event, 0);
-      //processPlayerEvents(*kurwinox, event, 1);
+      processPlayerEvents(*kurwinox, event, 1);
    }
 }
 
-void Game::update(sf::Time elapsed_time) {
+void Game::updateSinglePlayer(Hero& player, CollisionItem& collider, sf::Time elapsed_time)
+{
    // handle players move
-   // two approaches:
-   // - update position and check collision afterwards
-   // - check line from old to new position
-   if (math::length(bomba->getSpeed()) > 0)
+// two approaches:
+// - update position and check collision afterwards
+// - check line from old to new position
+   if (math::length(player.getSpeed()) > 0)
    {
-      sf::Vector2f pos = bomba->getPosition();
-      sf::Vector2f target = pos + bomba->getSpeed();
+      sf::Vector2f pos = player.getPosition();
+      sf::Vector2f target = pos + player.getSpeed();
       sf::Vector2f offset = target - pos;
-      AABB next_aabb = m_bomba_collider->shape.aabb;
+      AABB next_aabb = collider.shape.aabb;
       offset_aabb(next_aabb, offset.x, offset.y);
       CollisionInfo collision;
       //if (m_world.checkSingleCollision(pos, target, collision))//sphere
@@ -157,28 +209,28 @@ void Game::update(sf::Time elapsed_time) {
          {
             FixedObject* barrel = static_cast<FixedObject*>(collision.item1->custom_data);
             assert(barrel);
-            if (math::distance(bomba->getPosition(), barrel->getPosition()) < 10)
+            if (math::distance(player.getPosition(), barrel->getPosition()) < 10)
             {
-               if (bomba->isBackpackEmpty())
+               if (player.isBackpackEmpty())
                {
-                  bomba->barrelToBackpack(barrel);
+                  player.barrelToBackpack(barrel);
                   m_world.remove(&barrel->getCollisionItem());
                }
             }
             else
-               bomba->setPosition(target);
+               player.setPosition(target);
          }
          // blocking objects
          else
          {
             float collision_distance = math::distance(pos, collision.point);
-            if (collision_distance > bomba->getRadius())
+            if (collision_distance > player.getRadius())
             {
                // adjust hero position
                sf::Vector2f offset = target - pos;
                math::set_length(offset, collision_distance - 1);
                pos += offset;
-               bomba->setPosition(target);
+               player.setPosition(target);
             }
             // else don't move
          }
@@ -193,11 +245,16 @@ void Game::update(sf::Time elapsed_time) {
          //}
       }
       else
-         bomba->setPosition(target);
+         player.setPosition(target);
    }
-   bomba->update(elapsed_time);
+   player.update(elapsed_time);
+}
+
+void Game::update(sf::Time elapsed_time) {
+   updateSinglePlayer(*bomba, *m_bomba_collider, elapsed_time);
+   updateSinglePlayer(*kurwinox, *m_kurvinox_collider, elapsed_time);
+   
    m_background.update(elapsed_time);
-   //kurwinox->update(elapsed_time);
 }
 
 void Game::render() {
@@ -205,9 +262,11 @@ void Game::render() {
    
    m_background.draw(m_window);
 
-   m_window.draw(bomba->getSprite());
+   // already in m_renderables
+   //m_window.draw(bomba->getSprite());
+   //m_window.draw(kurwinox->getSprite());
 
-   for (const sf::Drawable* drawable : g_renderables)
+   for (const sf::Drawable* drawable : m_renderables)
    {
       m_window.draw(*drawable);
    }
@@ -249,7 +308,9 @@ void Game::loadResources() {
    m_debug_font.loadFromFile(data_path + font_file);
 }
 
-void Game::processPlayerEvents(Hero& hero, const sf::Event& event, bool player) {
+// 0: bomba
+// 1: kurvinox
+void Game::processPlayerEvents(Hero& hero, const sf::Event& event, int player) {
    std::vector<sf::Keyboard::Key> controls;
    if (player) {
       controls = { sf::Keyboard::Up, sf::Keyboard::Down, sf::Keyboard::Left, sf::Keyboard::Right };
@@ -266,7 +327,8 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, bool player) 
          || event.key.code == controls[2] && hero.getSpeed().x < 0
          || event.key.code == controls[3] && hero.getSpeed().x > 0) {
          hero.setAction(Action::IDLE);
-         m_background.contaminateArea(10, 10, sf::Color(150, 255, 150));
+         //debug purpose only
+         //m_background.contaminateArea(10, 10, hardcoded.comtaminate_color);
       }
       break;
    }
@@ -315,11 +377,16 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, bool player) 
          FixedObject* barrel = hero.dropBarrel();
          if (barrel)
          {
-            barrel->getCollisionItem().shape.aabb =
-               make_aabb(barrel->getPosition().x - 15, barrel->getPosition().y - 15, 30, 30);// todo hardcoded twice!
+            barrel->getCollisionItem().shape.aabb = make_aabb(
+                  barrel->getPosition().x - hardcoded.barrel_origin_x / 2,
+                  barrel->getPosition().y - hardcoded.barrel_origin_y / 2,
+                  hardcoded.barrel_origin_x, hardcoded.barrel_origin_y);
             m_world.add(&barrel->getCollisionItem());
-            addNewBarrel(sf::Vector2f(50, 300));
+            addNewBarrel(player_settings[player].barrel_spawn_location);
             // radioactivity 3..2..1
+            std::pair<int, int> origin_field = m_background.getField(barrel->getPosition());
+            m_background.addContaminateSource(origin_field.first, origin_field.second,
+               hardcoded.comtaminate_color, hardcoded.comtaminate_cycles);
          }
       }
       break;
@@ -331,12 +398,15 @@ void Game::addNewBarrel(sf::Vector2f position)
 {
    CollisionItem* collision_item = new CollisionItem;
    collision_item->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
-   collision_item->shape.aabb = make_aabb(position.x - 15, position.y - 15, 30, 30);// todo hardcoded twice!
+   collision_item->shape.aabb = make_aabb(
+      position.x - hardcoded.barrel_origin_x / 2,
+      position.y - hardcoded.barrel_origin_y / 2,
+      hardcoded.barrel_origin_x, hardcoded.barrel_origin_y);
    collision_item->material_type = MT_Barrel;
 
    sf::Texture& texture = m_texture_manager.get(TEX_BARREL);
    FixedObject* object = new FixedObject(texture, *collision_item, position, sf::Vector2f(15, 40));
-   g_renderables.push_back(&object->getSprite());
+   m_renderables.push_back(&object->getSprite());
 
    collision_item->custom_data = object;
    m_world.add(collision_item);
