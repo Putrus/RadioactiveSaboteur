@@ -166,6 +166,7 @@ void Game::newGame()
    m_renderables.push_back(&object->getSprite());
 
    addNewBarrel(player_settings[0].barrel_spawn_location);
+   addNewBarrel(player_settings[1].barrel_spawn_location);
 }
 
 void Game::processEvents() {
@@ -209,53 +210,58 @@ void Game::updateSinglePlayer(Hero& player, CollisionItem& collider, sf::Time el
       sf::Vector2f offset = target - pos;
       AABB next_aabb = collider.shape.aabb;
       offset_aabb(next_aabb, offset.x, offset.y);
-      CollisionInfo collision;
+      CollisionInfo collisions[4];
       //if (m_world.checkSingleCollision(pos, target, collision))//sphere
-      if (m_world.checkSingleCollision(next_aabb, collision))
+      // todo it should be sorted by distance to collision point
+      int col_count = m_world.checkManyCollisions(next_aabb, collisions, 4);
+      if (col_count > 0)
       {
-         if (collision.item1->material_type == MT_Barrel)
+         for (int idx = 0; idx < col_count; ++idx)
          {
-            FixedObject* barrel = static_cast<FixedObject*>(collision.item1->custom_data);
-            assert(barrel);
-            if (math::distance(player.getPosition(), barrel->getPosition()) < 10)
+            if (collisions[idx].item1->material_type == MT_Barrel)
             {
-               if (player.isBackpackEmpty())
+               FixedObject* barrel = static_cast<FixedObject*>(collisions[idx].item1->custom_data);
+               assert(barrel);
+               if (math::distance(player.getPosition(), barrel->getPosition()) < 10)
                {
-                  player.barrelToBackpack(barrel);
-                  m_world.remove(&barrel->getCollisionItem());
+                  if (player.isBackpackEmpty())
+                  {
+                     player.barrelToBackpack(barrel);
+                     m_world.remove(&barrel->getCollisionItem());
+                  }
                }
+               else
+                  player.setPosition(target);
             }
-            else
-               player.setPosition(target);
-         }
-         else if (collision.item1->material_type == MaterialType::MT_Water)
-         {
-            player.setWater(true);
-            player.setPosition(target);
-         }
-         // blocking objects
-         else
-         {
-            float collision_distance = math::distance(pos, collision.point);
-            if (collision_distance > player.getRadius())
+            else if (collisions[idx].item1->material_type == MaterialType::MT_Water)
             {
-               // adjust hero position
-               sf::Vector2f offset = target - pos;
-               math::set_length(offset, collision_distance - 1);
-               pos += offset;
+               player.setWater(true);
                player.setPosition(target);
             }
-            // else don't move
-         }
+            // blocking objects
+            else
+            {
+               float collision_distance = math::distance(pos, collisions[idx].point);
+               if (collision_distance > player.getRadius())
+               {
+                  // adjust hero position
+                  sf::Vector2f offset = target - pos;
+                  math::set_length(offset, collision_distance - 1);
+                  pos += offset;
+                  player.setPosition(target);
+               }
+               // else don't move
+            }
 
-         //if (collision.item2->material_type == 1)  // water
-         //{
-         //   // block
-         //}
-         //else if (collision.item2->material_type == 3)// wall
-         //{
-         //   // slide
-         //}
+            //if (collision.item2->material_type == 1)  // water
+            //{
+            //   // block
+            //}
+            //else if (collision.item2->material_type == 3)// wall
+            //{
+            //   // slide
+            //}
+         }
       }
       else
       {

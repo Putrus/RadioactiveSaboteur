@@ -226,3 +226,32 @@ bool World::checkSingleCollision(const AABB& aabb, CollisionInfo& result) const
 
    return collision;
 }
+
+int World::checkManyCollisions(const AABB& aabb, CollisionInfo* results, int results_max) const
+{
+   if (results_max <= 0)
+      return 0;
+
+   int collisions = 0;
+   for (const CollisionItem* item : m_collision_items)
+   {
+      // todo performance, use 2d array of test functions
+      bool local_collision = false;
+      if (item->shape.type == CollisionShapeType::AxisAlignedBoundingBox)
+         local_collision = handleCollisionOfTwoAABB(aabb, item->shape.aabb, results[collisions]);
+      //else if (item->shape.type == CollisionShapeType::Sphere)
+      //   local_collision = handleCollisionSphereVsLine(*item, line_p1, line_p2, result);
+      else
+         assert(false);//not implemented
+
+      if (local_collision)
+      {
+         results[collisions].item1 = item;
+         results[collisions].item2 = nullptr;
+         if (++collisions >= results_max)
+            break;
+      }
+   }
+
+   return collisions;
+}
