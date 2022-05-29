@@ -19,5 +19,5 @@ enum MaterialType
    // non-moving objects
    MT_Tree = 20,
    MT_Wall,
-   MT_Water
+   MT_Water = 69
 };

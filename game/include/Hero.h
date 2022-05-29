@@ -5,7 +5,6 @@
 constexpr int frame_size = 64;
 constexpr int texture_width = 256;
 constexpr int texture_height = 256;
-constexpr float hero_speed = 5.0f;
 
 enum Action {
    IDLE = 0,
@@ -41,6 +40,7 @@ public:
    void barrelToBackpack(FixedObject* barrel);
    FixedObject* dropBarrel();
    bool isBackpackEmpty();
+   void setWater(bool water);
 
 private:
    sf::Sprite m_sprite;
@@ -53,4 +53,6 @@ private:
    
    float m_animation_delay;
    float m_animation_speed;
+   bool m_water;
+   float m_hero_speed;
 };

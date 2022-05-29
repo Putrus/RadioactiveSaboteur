@@ -15,7 +15,7 @@ x second player: button for dropping item (first player uses space)
 
 Optional:
 - menu
-- slow down in water
+x slow down in water
 - comtaminate area - improve
 - rendering: sort by y value
 */
@@ -102,9 +102,6 @@ void Game::newGame()
    {
       for (int x = 0; x < 64; ++x)
       {
-         if (m_background.isWater(x, y)) {
-
-         }
          bool is_water_one_above = m_background.isWater(x, y - 1);
          int type = m_background.isWater(x-1, y) || is_water_one_above ? rand() % 12 : rand() % 8;
          sf::IntRect source_rect(
@@ -115,7 +112,7 @@ void Game::newGame()
          }
          sf::Vector2f target_position(x * background_field_size, y * background_field_size);
          sf::IntRect target_rect(target_position.x, target_position.y, background_field_size, background_field_size);
-         if (type < 900)
+         if (type < 7)
             m_background.addSprite(bkg, source_rect, target_position);
          else
          {
@@ -220,6 +217,11 @@ void Game::updateSinglePlayer(Hero& player, CollisionItem& collider, sf::Time el
             else
                player.setPosition(target);
          }
+         else if (collision.item1->material_type == MaterialType::MT_Water)
+         {
+            player.setWater(true);
+            player.setPosition(target);
+         }
          // blocking objects
          else
          {
@@ -245,7 +247,10 @@ void Game::updateSinglePlayer(Hero& player, CollisionItem& collider, sf::Time el
          //}
       }
       else
+      {
+         player.setWater(false);
          player.setPosition(target);
+      }
    }
    player.update(elapsed_time);
 }
