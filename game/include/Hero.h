@@ -20,6 +20,7 @@ enum Action {
 };
 
 struct CollisionItem;
+class FixedObject;
 
 class Hero
 {
@@ -37,10 +38,15 @@ public:
    void update(sf::Time elapsed_time);
    sf::Vector2f getSpeed() const;
 
+   void barrelToBackpack(FixedObject* barrel);
+   FixedObject* dropBarrel();
+   bool isBackpackEmpty();
+
 private:
    sf::Sprite m_sprite;
+   CollisionItem& m_collision_item;
+   FixedObject* m_backpack_object;
    float m_radius;
-   //CollisionItem& m_collision_item;
    sf::Vector2f m_speed;
    Action m_action;
    sf::Time m_last_animation_frame_time;

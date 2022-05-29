@@ -81,22 +81,38 @@ void Game::newGame()
       }
    }
 
+   //sf::Vector2f pos(10, 10);
+   //CollisionItem *collision_item = new CollisionItem;
+   //collision_item->shape.type = CollisionShapeType::Sphere;
+   //collision_item->shape.sphere = { pos.x, pos.y, frame_size / 2 };
+   //collision_item->material_type = MT_Hero;
+   //bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), *collision_item, sf::Vector2f(10.f, 10.f)));
+   ////kurvinox.reset(new Hero(m_texture_manager.get(TEX_HERO2), *collision_item, sf::Vector2f(500.f, 210.f)));
+   //g_renderables.push_back(&bomba->getSprite());
+   ////g_renderables.push_back(&kurwinox->getSprite());
    sf::Vector2f pos(10, 10);
-   CollisionItem *collision_item = new CollisionItem;
-   collision_item->shape.type = CollisionShapeType::Sphere;
-   collision_item->shape.sphere = { pos.x, pos.y, frame_size / 2 };
-   collision_item->material_type = MT_Hero;
-   bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), *collision_item, sf::Vector2f(10.f, 10.f)));
+   m_bomba_collider = new CollisionItem;
+   m_bomba_collider->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
+   m_bomba_collider->shape.aabb = make_aabb(pos.x - 16, pos.y - 16, 32, 32);
+   m_bomba_collider->material_type = MT_Hero;
+   bomba.reset(new Hero(m_texture_manager.get(TEX_HERO1), *m_bomba_collider, pos));
    //kurvinox.reset(new Hero(m_texture_manager.get(TEX_HERO2), *collision_item, sf::Vector2f(500.f, 210.f)));
    g_renderables.push_back(&bomba->getSprite());
    //g_renderables.push_back(&kurwinox->getSprite());
 
    pos = sf::Vector2f(250, 250);
-   FixedObject* object = new FixedObject(m_texture_manager.get(TEX_TREE1), pos, sf::Vector2f(31, 115));
-   collision_item->shape.sphere = { pos.x, pos.y, 10 };
+   CollisionItem* collision_item = new CollisionItem;
+   FixedObject* object = new FixedObject(m_texture_manager.get(TEX_TREE1),
+      *collision_item, pos, sf::Vector2f(31, 115));
+   collision_item->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
+   collision_item->shape.aabb = make_aabb(pos.x, pos.y, 32, 32);
+   collision_item->material_type = MT_Hero;
+   //collision_item->shape.sphere = { pos.x, pos.y, 10 };
    collision_item->material_type = MT_Tree;
    m_world.add(collision_item);
    g_renderables.push_back(&object->getSprite());
+
+   addNewBarrel(sf::Vector2f(50, 300));
 }
 
 void Game::processEvents() {
@@ -130,12 +146,27 @@ void Game::update(sf::Time elapsed_time) {
    {
       sf::Vector2f pos = bomba->getPosition();
       sf::Vector2f target = pos + bomba->getSpeed();
+      sf::Vector2f offset = target - pos;
+      AABB next_aabb = m_bomba_collider->shape.aabb;
+      offset_aabb(next_aabb, offset.x, offset.y);
       CollisionInfo collision;
-      if (m_world.checkSingleCollision(pos, target, collision))
+      //if (m_world.checkSingleCollision(pos, target, collision))//sphere
+      if (m_world.checkSingleCollision(next_aabb, collision))
       {
          if (collision.item1->material_type == MT_Barrel)
          {
-            assert(false);//not implemented
+            FixedObject* barrel = static_cast<FixedObject*>(collision.item1->custom_data);
+            assert(barrel);
+            if (math::distance(bomba->getPosition(), barrel->getPosition()) < 10)
+            {
+               if (bomba->isBackpackEmpty())
+               {
+                  bomba->barrelToBackpack(barrel);
+                  m_world.remove(&barrel->getCollisionItem());
+               }
+            }
+            else
+               bomba->setPosition(target);
          }
          // blocking objects
          else
@@ -167,19 +198,6 @@ void Game::update(sf::Time elapsed_time) {
    bomba->update(elapsed_time);
    m_background.update(elapsed_time);
    //kurwinox->update(elapsed_time);
-
-   // add new barrel
-   //if (...)
-   //{
-   //   // todo graphic data
-   //   CollisionItem collision_item{};
-   //   collision_item.shape.type = CollisionShapeType::Sphere;
-   //   collision_item.shape.sphere = { x, y, radius };
-   //   collision_item.material_type = 5;// todo prepare material list e.g. water, wall, pickable objects etc.
-   //   m_world.add(collision_item);
-   //   // todo game object (keeps graphic data and shape data reference)
-   //}
-
 }
 
 void Game::render() {
@@ -224,6 +242,8 @@ void Game::loadResources() {
    m_texture_manager.load(TEX_HERO2, (data_path + "HERO2.png").c_str());
    m_texture_manager.load(TEX_TREE1, (data_path + "tree_1.png").c_str());
    m_texture_manager.load(TEX_BACKGROUND, (data_path + "BACKGROUND.png").c_str());
+   m_texture_manager.load(TEX_BARREL, (data_path + "BARREL1.png").c_str());
+
    //std::string font_file = "arial.ttf";
    std::string font_file = "consola.ttf";
    m_debug_font.loadFromFile(data_path + font_file);
@@ -289,7 +309,35 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, bool player) 
             hero.setAction(Action::RIGHT);
          break;
       }
+      if (event.key.code == sf::Keyboard::Space)
+      {
+         // null if space pressed without holding any object
+         FixedObject* barrel = hero.dropBarrel();
+         if (barrel)
+         {
+            barrel->getCollisionItem().shape.aabb =
+               make_aabb(barrel->getPosition().x - 15, barrel->getPosition().y - 15, 30, 30);// todo hardcoded twice!
+            m_world.add(&barrel->getCollisionItem());
+            addNewBarrel(sf::Vector2f(50, 300));
+            // radioactivity 3..2..1
+         }
+      }
       break;
    }
    }
+}
+
+void Game::addNewBarrel(sf::Vector2f position)
+{
+   CollisionItem* collision_item = new CollisionItem;
+   collision_item->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
+   collision_item->shape.aabb = make_aabb(position.x - 15, position.y - 15, 30, 30);// todo hardcoded twice!
+   collision_item->material_type = MT_Barrel;
+
+   sf::Texture& texture = m_texture_manager.get(TEX_BARREL);
+   FixedObject* object = new FixedObject(texture, *collision_item, position, sf::Vector2f(15, 40));
+   g_renderables.push_back(&object->getSprite());
+
+   collision_item->custom_data = object;
+   m_world.add(collision_item);
 }

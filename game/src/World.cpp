@@ -23,18 +23,26 @@ void World::remove(CollisionItem* collision_item)
    }
 }
 
-bool handleCollisionOfTwoAABB(const CollisionItem& aabb1, const CollisionItem& aabb2, CollisionInfo& result)
+inline bool handleCollisionOfTwoAABB(const AABB& aabb1, const AABB& aabb2, CollisionInfo& result)
 {
-   if (aabb1.shape.aabb.right > aabb2.shape.aabb.left && aabb1.shape.aabb.right < aabb2.shape.aabb.right)
-      return true;
-   if (aabb1.shape.aabb.left > aabb2.shape.aabb.left && aabb1.shape.aabb.left < aabb2.shape.aabb.right)
-      return true;
-   if (aabb1.shape.aabb.bottom > aabb2.shape.aabb.top && aabb1.shape.aabb.bottom < aabb2.shape.aabb.bottom)
-      return true;
-   if (aabb1.shape.aabb.top > aabb2.shape.aabb.top && aabb1.shape.aabb.top < aabb2.shape.aabb.bottom)
-      return true;
+   return std::max(aabb1.left, aabb2.left) <= std::min(aabb1.right, aabb2.right) &&
+      std::max(aabb1.top, aabb2.top) <= std::min(aabb1.bottom, aabb2.bottom);
+   // wrong!!!
+   //if (aabb1.right > aabb2.left && aabb1.right < aabb2.right)
+   //   return true;
+   //if (aabb1.left > aabb2.left && aabb1.left < aabb2.right)
+   //   return true;
+   //if (aabb1.bottom > aabb2.top && aabb1.bottom < aabb2.bottom)
+   //   return true;
+   //if (aabb1.top > aabb2.top && aabb1.top < aabb2.bottom)
+   //   return true;
 
    return false;
+}
+
+bool handleCollisionOfTwoAABB(const CollisionItem& aabb1, const CollisionItem& aabb2, CollisionInfo& result)
+{
+   return handleCollisionOfTwoAABB(aabb1.shape.aabb, aabb2.shape.aabb, result);
 }
 
 bool handleCollisionOfTwoSpheres(const CollisionItem& sphere1, const CollisionItem& sphere2, CollisionInfo& result)
@@ -176,6 +184,33 @@ bool World::checkSingleCollision(sf::Vector2f line_p1, sf::Vector2f line_p2, Col
          local_collision = handleCollisionAABBvsLine(*item, line_p1, line_p2, result);
       else if (item->shape.type == CollisionShapeType::Sphere)
          local_collision = handleCollisionSphereVsLine(*item, line_p1, line_p2, result);
+      else
+         assert(false);//not implemented
+
+      // todo don't stop but test other items for closer collision
+      if (local_collision)
+      {
+         result.item1 = item;
+         result.item2 = nullptr;
+         collision = true;
+         break;
+      }
+   }
+
+   return collision;
+}
+
+bool World::checkSingleCollision(const AABB& aabb, CollisionInfo& result) const
+{
+   bool collision = false;
+   for (const CollisionItem* item : m_collision_items)
+   {
+      // todo performance, use 2d array of test functions
+      bool local_collision = false;
+      if (item->shape.type == CollisionShapeType::AxisAlignedBoundingBox)
+         local_collision = handleCollisionOfTwoAABB(aabb, item->shape.aabb, result);
+      //else if (item->shape.type == CollisionShapeType::Sphere)
+      //   local_collision = handleCollisionSphereVsLine(*item, line_p1, line_p2, result);
       else
          assert(false);//not implemented
 

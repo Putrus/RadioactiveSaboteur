@@ -1,15 +1,24 @@
 #include "../include/Hero.h"
+#include "../include/FixedObject.h"
 #include "../include/World.h"
 
 #define SQRT2 1.41f
+constexpr float BACKBACK_VERTICAL_OFFSET = 15;
 
 Hero::Hero(sf::Texture& texture, CollisionItem &collision_item, sf::Vector2f position) : 
-   m_sprite(texture), m_speed(0.f, 0.f), m_action(Action::IDLE), m_animation_delay(0.f), m_animation_speed(0.2f) {
+   m_sprite(texture),
+   m_collision_item(collision_item),
+   m_backpack_object(nullptr),
+   m_speed(0.f, 0.f),
+   m_action(Action::IDLE),
+   m_animation_delay(0.f),
+   m_animation_speed(0.2f)
+{
    // idle - [0,0]
    sf::IntRect rect(0, 0, frame_size, frame_size);
    m_sprite.setTextureRect(rect);
    // todo!!!!!!!!!!!!!!!!!!!!
-   m_sprite.setOrigin(32, 49);
+   m_sprite.setOrigin(32, 52);
    //m_sprite.setOrigin(frame_size / 2, frame_size / 2);
    m_sprite.setPosition(position);
 
@@ -25,6 +34,16 @@ sf::Vector2f Hero::getPosition() const
 void Hero::setPosition(const sf::Vector2f& position)
 {
    m_sprite.setPosition(position);
+   //offset_aabb(m_collision_item.shape.aabb, offset);
+   m_collision_item.shape.aabb.left = position.x - 16;
+   m_collision_item.shape.aabb.right = position.x + 16;
+   m_collision_item.shape.aabb.top = position.y - 16;
+   m_collision_item.shape.aabb.bottom = position.y + 16;
+
+   if (m_backpack_object)
+   {
+      m_backpack_object->setPosition(position - sf::Vector2f(0, BACKBACK_VERTICAL_OFFSET));
+   }
 }
 
 sf::Sprite& Hero::getSprite()
@@ -103,4 +122,27 @@ void Hero::update(sf::Time elapsed_time) {
 
 sf::Vector2f Hero::getSpeed() const {
    return m_speed;
+}
+
+void Hero::barrelToBackpack(FixedObject* barrel)
+{
+   barrel->getSprite().setScale(0.75f, 0.75f);
+   m_backpack_object = barrel;
+}
+
+FixedObject* Hero::dropBarrel()
+{
+   if (!m_backpack_object)
+      return nullptr;
+
+   m_backpack_object->getSprite().setScale(1, 1);
+   m_backpack_object->setPosition(m_backpack_object->getPosition() + sf::Vector2f(0, BACKBACK_VERTICAL_OFFSET));
+   FixedObject* barrel = m_backpack_object;
+   m_backpack_object = nullptr;
+   return barrel;
+}
+
+bool Hero::isBackpackEmpty()
+{
+   return m_backpack_object == nullptr;
 }

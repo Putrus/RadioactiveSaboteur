@@ -15,6 +15,24 @@ struct AABB
 	float left, right, top, bottom;
 };
 
+inline AABB make_aabb(float left, float top, float width, float height)
+{
+	return { left, left + width, top, top + height };
+}
+
+inline void offset_aabb(AABB &aabb, float x, float y)
+{
+	aabb.left += x;
+	aabb.right += x;
+	aabb.top += y;
+	aabb.bottom += y;
+}
+
+inline void offset_aabb(AABB& aabb, float value)
+{
+	offset_aabb(aabb, value, value);
+}
+
 struct Sphere
 {
 	float x, y, radius;
@@ -60,6 +78,7 @@ public:
 	void remove(CollisionItem* collision_item);
 	bool checkSingleCollision(const CollisionItem* object, CollisionInfo& result) const;
 	bool checkSingleCollision(sf::Vector2f line_p1, sf::Vector2f line_p2, CollisionInfo& result) const;
+	bool checkSingleCollision(const AABB& aabb, CollisionInfo& result) const;
 
 private:
 	std::vector<CollisionItem*> m_collision_items;
