@@ -67,12 +67,12 @@ Game::Game(const std::string& root_path) :
          m_root_path += '\\';
    }
 
-   player_settings[0].start_position = sf::Vector2f(20, 20);
-   player_settings[1].start_position = sf::Vector2f(780, 20);
+   player_settings[0].start_position = sf::Vector2f(50, 80);
+   player_settings[1].start_position = sf::Vector2f(1800, 80);
    player_settings[0].name = "K. Bomba";
    player_settings[1].name = "Domino";//"Micha³ G³uœ";
    player_settings[0].barrel_spawn_location = sf::Vector2f(50, 300);
-   player_settings[1].barrel_spawn_location = sf::Vector2f(750, 300);
+   player_settings[1].barrel_spawn_location = sf::Vector2f(1800, 300);
 }
 
 void Game::run() {
@@ -204,11 +204,25 @@ void Game::processEvents() {
       {
          if (event.key.code == sf::Keyboard::F1)
             m_print_debug_info = !m_print_debug_info;
+         
+         if (event.key.code == sf::Keyboard::Escape) {
+            m_menu->setVisible(true);      
+         }
          break;
       }
       case sf::Event::MouseButtonPressed:
       {
          if (event.key.code == sf::Mouse::Left) {
+            sf::Vector2i mp = sf::Mouse::getPosition();
+            unsigned char res = m_menu->click(mp);
+            if (res == 0) {
+               m_menu->setVisible(false);
+               newGame();
+            }
+            else if (res == 2) {
+               m_window.close();
+               break;
+            }
          }
       }
       //to do change it to sf::Keyboard
@@ -348,11 +362,12 @@ void Game::render() {
    {
       std::string score_text = player_settings[idx].name + ": " + std::to_string(player_stats[idx].current_score);
       sf::Text text;
-      text.setFont(m_debug_font);
+      text.setFont(m_font_manager.get(FONT_PIXEL));
       text.setString(score_text);
       text.setCharacterSize(24); // in pixels, not points!
       text.setFillColor(sf::Color::Green);
-      text.setPosition(WINDOW_WIDTH / 3 + 200 * idx, WINDOW_HEIGHT - 30);
+      //text.setPosition(WINDOW_WIDTH / 3 + 200 * idx, WINDOW_HEIGHT - 30);
+      text.setPosition(760 + idx*200, 50);
       m_window.draw(text);
    }
 

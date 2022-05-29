@@ -143,8 +143,8 @@ int Background::getContaminationCount(int part)
    //   {
    //      score += m_field_states[idy][idx];
    //   }
-   int x0 = (part == 0) ? 0 : 17;
-   int x1 = (part == 0) ? 16: 33;
+   int x0 = (part == 0) ? 0 : 33;
+   int x1 = (part == 0) ? 32: 63;
    int y0 = 0;
    int y1 = background_field_rows;
    for (int idy = y0; idy < y1; ++idy)

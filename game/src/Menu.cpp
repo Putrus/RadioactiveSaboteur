@@ -15,7 +15,7 @@ void Menu::draw(sf::RenderWindow& window) {
    window.draw(m_credits->getSprite());
 }
 
-void Menu::update(const sf::Vector2i mouse_position) {
+void Menu::update(const sf::Vector2i& mouse_position) {
    m_start->advise(mouse_position);
    m_credits->advise(mouse_position);
    m_exit->advise(mouse_position);
@@ -27,4 +27,19 @@ bool Menu::isVisible() {
 
 void Menu::setVisible(bool visible) {
    m_is_visible = visible;
+}
+
+unsigned char Menu::click(const sf::Vector2i& mouse_position) {
+   if (m_start->isAdvisable(mouse_position)) {
+      return 0;
+   }
+   else if (m_credits->isAdvisable(mouse_position)) {
+      return 1;
+   }
+   else if (m_exit->isAdvisable(mouse_position)) {
+      return 2;
+   }
+   else {
+      return -1;
+   }
 }
