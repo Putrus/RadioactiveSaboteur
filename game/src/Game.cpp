@@ -8,7 +8,8 @@
 
 Game::Game(const std::string& root_path) :
    m_root_path(root_path),
-   m_window(sf::VideoMode(1024, 800), "Radioactive Saboteur"), m_time_per_frame(sf::seconds(1.f / 60.f))
+   m_window(sf::VideoMode(1024, 800), "Radioactive Saboteur"), m_time_per_frame(sf::seconds(1.f / 60.f)),
+   m_print_debug_info(false)
 {
    if (m_root_path.size() > 0)
    {
@@ -107,6 +108,12 @@ void Game::processEvents() {
          m_window.close();
          break;
       }
+      case sf::Event::KeyReleased:
+      {
+         if (event.key.code == sf::Keyboard::F1)
+            m_print_debug_info = !m_print_debug_info;
+         break;
+      }
       //to do change it to sf::Keyboard
       }
       processPlayerEvents(*bomba, event, 0);
@@ -186,6 +193,23 @@ void Game::render() {
    {
       m_window.draw(*drawable);
    }
+
+   if (m_print_debug_info)
+   {
+      std::string debug_text = "Collider: L: "
+         + std::to_string(m_bomba_collider->shape.aabb.left) + " T: "
+         + std::to_string(m_bomba_collider->shape.aabb.top) + " R: "
+         + std::to_string(m_bomba_collider->shape.aabb.right) + " B: "
+         + std::to_string(m_bomba_collider->shape.aabb.bottom) + "\n"
+         + "Sprite pos: " + std::to_string(bomba->getPosition().x) + " " + std::to_string(bomba->getPosition().y);
+      sf::Text text;
+      text.setFont(m_debug_font);
+      text.setString(debug_text);
+      text.setCharacterSize(20); // in pixels, not points!
+      text.setFillColor(sf::Color::Yellow);
+      m_window.draw(text);
+   }
+
    m_window.display();
 }
 
@@ -200,6 +224,9 @@ void Game::loadResources() {
    m_texture_manager.load(TEX_HERO2, (data_path + "HERO2.png").c_str());
    m_texture_manager.load(TEX_TREE1, (data_path + "tree_1.png").c_str());
    m_texture_manager.load(TEX_BACKGROUND, (data_path + "BACKGROUND.png").c_str());
+   //std::string font_file = "arial.ttf";
+   std::string font_file = "consola.ttf";
+   m_debug_font.loadFromFile(data_path + font_file);
 }
 
 void Game::processPlayerEvents(Hero& hero, const sf::Event& event, bool player) {

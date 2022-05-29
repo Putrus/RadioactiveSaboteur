@@ -30,6 +30,8 @@ private:
    World m_world;
    Background m_background;
    const sf::Time m_time_per_frame;
+   sf::Font m_debug_font;
+   bool m_print_debug_info;
    std::unique_ptr<Hero> bomba;
    std::unique_ptr<Hero> kurwinox;
 };
