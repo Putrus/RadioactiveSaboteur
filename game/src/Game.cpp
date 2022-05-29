@@ -10,7 +10,7 @@
 Must have:
 - ignore barrel when dropped
 x second player
-- second player: button for dropping item (first player uses space)
+x second player: button for dropping item (first player uses space)
 - calculate statistics & win/lose
 
 Optional:
@@ -313,10 +313,10 @@ void Game::loadResources() {
 void Game::processPlayerEvents(Hero& hero, const sf::Event& event, int player) {
    std::vector<sf::Keyboard::Key> controls;
    if (player) {
-      controls = { sf::Keyboard::Up, sf::Keyboard::Down, sf::Keyboard::Left, sf::Keyboard::Right };
+      controls = { sf::Keyboard::Up, sf::Keyboard::Down, sf::Keyboard::Left, sf::Keyboard::Right, sf::Keyboard::RControl };
    }
    else {
-      controls = { sf::Keyboard::W, sf::Keyboard::S, sf::Keyboard::A, sf::Keyboard::D };
+      controls = { sf::Keyboard::W, sf::Keyboard::S, sf::Keyboard::A, sf::Keyboard::D, sf::Keyboard::Space };
    }
    switch (event.type) {
    case sf::Event::KeyReleased:
@@ -371,7 +371,7 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, int player) {
             hero.setAction(Action::RIGHT);
          break;
       }
-      if (event.key.code == sf::Keyboard::Space)
+      if (event.key.code == controls[4])
       {
          // null if space pressed without holding any object
          FixedObject* barrel = hero.dropBarrel();
