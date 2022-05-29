@@ -5,6 +5,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <cassert>
+#include <iostream>
 
 /*
 Must have:
@@ -44,7 +45,7 @@ struct PlayerStats
 
 Game::Game(const std::string& root_path) :
    m_root_path(root_path),
-   m_window(sf::VideoMode(1024, 800), "Radioactive Saboteur"), m_time_per_frame(sf::seconds(1.f / 60.f)),
+   m_window(sf::VideoMode(1024, 800), "Radioactive Saboteur", sf::Style::Fullscreen), m_time_per_frame(sf::seconds(1.f / 60.f)),
    m_print_debug_info(false),
    m_bomba_collider(nullptr),
    m_kurvinox_collider(nullptr)
@@ -66,6 +67,7 @@ void Game::run() {
    sf::Time time_since_last_update = sf::Time::Zero;
    // todo connect with menu handler at the end!
    loadResources();
+   m_menu.reset(new Menu(m_texture_manager.get(TEX_MENU)));
    newGame();
 
    //game loop
@@ -181,6 +183,12 @@ void Game::processEvents() {
             m_print_debug_info = !m_print_debug_info;
          break;
       }
+      case sf::Event::MouseButtonPressed:
+      {
+         if (event.key.code == sf::Mouse::Left) {
+            std::cout << sf::Mouse::getPosition().x << " " << sf::Mouse::getPosition().y << std::endl;
+         }
+      }
       //to do change it to sf::Keyboard
       }
       processPlayerEvents(*bomba, event, 0);
@@ -262,37 +270,44 @@ void Game::update(sf::Time elapsed_time) {
    updateSinglePlayer(*bomba, *m_bomba_collider, elapsed_time);
    updateSinglePlayer(*kurwinox, *m_kurvinox_collider, elapsed_time);
    
+   m_menu->update(sf::Mouse::getPosition(m_window));
    m_background.update(elapsed_time);
 }
 
 void Game::render() {
    m_window.clear();
    
-   m_background.draw(m_window);
+   if (!m_menu->isVisible()) {
 
-   // already in m_renderables
-   //m_window.draw(bomba->getSprite());
-   //m_window.draw(kurwinox->getSprite());
+      m_background.draw(m_window);
 
-   for (const sf::Drawable* drawable : m_renderables)
-   {
-      m_window.draw(*drawable);
+      // already in m_renderables
+      //m_window.draw(bomba->getSprite());
+      //m_window.draw(kurwinox->getSprite());
+
+      for (const sf::Drawable* drawable : m_renderables)
+      {
+         m_window.draw(*drawable);
+      }
+
+      if (m_print_debug_info)
+      {
+         std::string debug_text = "Collider: L: "
+            + std::to_string(m_bomba_collider->shape.aabb.left) + " T: "
+            + std::to_string(m_bomba_collider->shape.aabb.top) + " R: "
+            + std::to_string(m_bomba_collider->shape.aabb.right) + " B: "
+            + std::to_string(m_bomba_collider->shape.aabb.bottom) + "\n"
+            + "Sprite pos: " + std::to_string(bomba->getPosition().x) + " " + std::to_string(bomba->getPosition().y);
+         sf::Text text;
+         text.setFont(m_debug_font);
+         text.setString(debug_text);
+         text.setCharacterSize(20); // in pixels, not points!
+         text.setFillColor(sf::Color::Yellow);
+         m_window.draw(text);
+      }
    }
-
-   if (m_print_debug_info)
-   {
-      std::string debug_text = "Collider: L: "
-         + std::to_string(m_bomba_collider->shape.aabb.left) + " T: "
-         + std::to_string(m_bomba_collider->shape.aabb.top) + " R: "
-         + std::to_string(m_bomba_collider->shape.aabb.right) + " B: "
-         + std::to_string(m_bomba_collider->shape.aabb.bottom) + "\n"
-         + "Sprite pos: " + std::to_string(bomba->getPosition().x) + " " + std::to_string(bomba->getPosition().y);
-      sf::Text text;
-      text.setFont(m_debug_font);
-      text.setString(debug_text);
-      text.setCharacterSize(20); // in pixels, not points!
-      text.setFillColor(sf::Color::Yellow);
-      m_window.draw(text);
+   else {
+      m_menu->draw(m_window);
    }
 
    m_window.display();
@@ -310,10 +325,12 @@ void Game::loadResources() {
    m_texture_manager.load(TEX_TREE1, (data_path + "tree_1.png").c_str());
    m_texture_manager.load(TEX_BACKGROUND, (data_path + "BACKGROUND.png").c_str());
    m_texture_manager.load(TEX_BARREL, (data_path + "BARREL1.png").c_str());
+   m_texture_manager.load(TEX_MENU, (data_path + "MENU.png").c_str());
 
    //std::string font_file = "arial.ttf";
    std::string font_file = "consola.ttf";
    m_debug_font.loadFromFile(data_path + font_file);
+   m_font_manager.load(FONT_PIXEL, (data_path + "pixel.ttf").c_str());
 }
 
 // 0: bomba

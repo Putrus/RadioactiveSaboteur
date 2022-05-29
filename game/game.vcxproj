@@ -152,17 +152,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Background.cpp" />
+    <ClCompile Include="src\Button.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Hero.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Menu.cpp" />
     <ClCompile Include="src\World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Background.h" />
+    <ClInclude Include="include\Button.h" />
     <ClInclude Include="include\FixedObject.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Hero.h" />
     <ClInclude Include="include\Math.h" />
+    <ClInclude Include="include\Menu.h" />
     <ClInclude Include="include\ResourceHolder.h" />
     <ClInclude Include="include\Resources.h" />
     <ClInclude Include="include\World.h" />

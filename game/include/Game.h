@@ -4,6 +4,7 @@
 #include "Resources.h"
 #include "World.h"
 #include "Hero.h"
+#include "Menu.h"
 
 #include <SFML/Graphics.hpp>
 #include <vector>
@@ -28,6 +29,7 @@ private:
    std::string m_root_path;
    sf::RenderWindow m_window;
    TextureHolder m_texture_manager;
+   FontHolder m_font_manager;
    std::vector<const sf::Drawable*> m_renderables;
    World m_world;
    Background m_background;
@@ -38,4 +40,5 @@ private:
    std::unique_ptr<Hero> kurwinox;
    CollisionItem* m_bomba_collider;
    CollisionItem* m_kurvinox_collider;
+   std::unique_ptr<Menu> m_menu;
 };
