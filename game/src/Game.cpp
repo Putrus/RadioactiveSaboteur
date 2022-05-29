@@ -8,7 +8,7 @@
 
 /*
 Must have:
-- ignore barrel when dropped
+x respawn barrel only if it was dropped first time (ignore moved barrels)
 x second player
 x second player: button for dropping item (first player uses space)
 - calculate statistics & win/lose
@@ -22,6 +22,7 @@ x slow down in water
 
 struct HardcodedSettings
 {
+   float hero_aabb_size = 32;
    //sf::Vector2f barrel_origin(30, 30);
    float barrel_origin_x = 30;
    float barrel_origin_y = 30;
@@ -137,7 +138,9 @@ void Game::newGame()
       sf::Vector2f pos = player_settings[player_index].start_position;
       auto *collision_item = new CollisionItem;
       collision_item->shape.type = CollisionShapeType::AxisAlignedBoundingBox;
-      collision_item->shape.aabb = make_aabb(pos.x - 16, pos.y - 16, 32, 32);
+      collision_item->shape.aabb = make_aabb(
+         pos.x - hardcoded.hero_aabb_size / 2, pos.y - hardcoded.hero_aabb_size / 2,
+         hardcoded.hero_aabb_size, hardcoded.hero_aabb_size);
       collision_item->material_type = MT_Hero;
       target_hero.reset(new Hero(m_texture_manager.get(TextureID(texture_id)), *collision_item, pos));
       m_renderables.push_back(&target_hero->getSprite());
@@ -382,16 +385,50 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, int player) {
          FixedObject* barrel = hero.dropBarrel();
          if (barrel)
          {
+            // in idle we don't have info about orientation so we need the previous action
+            Action action = hero.getAction();
+            // todo if idle then drop in the direction of enemy area
+            if (action == Action::IDLE)
+               action = hero.getPreviousAction();
+
+            static const Action opposite_directions[] =
+            {
+               IDLE,    //IDLE = 0,
+               UP,      //DOWN,
+               LEFT,    //RIGHT,
+               RIGHT,   //LEFT,
+               DOWN,    //UP,
+               DOWNRIGHT,  //UPLEFT,
+               DOWNLEFT,   //UPRIGHT,
+               UPRIGHT,    //DOWNLEFT,
+               UPLEFT,     //DOWNRIGHT
+            };
+            sf::Vector2f new_position;
+            Action reversed_action = opposite_directions[action];
+            float off_x = 0, off_y = 0;
+            if (reversed_action == LEFT || reversed_action == DOWNLEFT || reversed_action == UPLEFT)
+               off_x = -hardcoded.hero_aabb_size;
+            else if (reversed_action == RIGHT || reversed_action == DOWNRIGHT || reversed_action == UPRIGHT)
+               off_x = hardcoded.hero_aabb_size;
+            if (reversed_action == UP || reversed_action == UPLEFT || reversed_action == UPRIGHT)
+               off_y = -hardcoded.hero_aabb_size;
+            else if (reversed_action == DOWN || reversed_action == DOWNLEFT || reversed_action == DOWNRIGHT)
+               off_y = hardcoded.hero_aabb_size;
+
+            new_position = barrel->getPosition() + sf::Vector2f(off_x, off_y);
+            barrel->setPosition(new_position);
             barrel->getCollisionItem().shape.aabb = make_aabb(
                   barrel->getPosition().x - hardcoded.barrel_origin_x / 2,
                   barrel->getPosition().y - hardcoded.barrel_origin_y / 2,
                   hardcoded.barrel_origin_x, hardcoded.barrel_origin_y);
             m_world.add(&barrel->getCollisionItem());
-            addNewBarrel(player_settings[player].barrel_spawn_location);
+            if (!barrel->isTouched())
+               addNewBarrel(player_settings[player].barrel_spawn_location);
             // radioactivity 3..2..1
             std::pair<int, int> origin_field = m_background.getField(barrel->getPosition());
             m_background.addContaminateSource(origin_field.first, origin_field.second,
                hardcoded.comtaminate_color, hardcoded.comtaminate_cycles);
+            barrel->touch();
          }
       }
       break;
