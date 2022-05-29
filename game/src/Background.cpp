@@ -118,9 +118,10 @@ void Background::contaminateArea(int embryo_x, int embryo_y, const sf::Color& co
    setFieldState(x + increment_y, y + increment_x, 1);
 }
 
-void Background::addContaminateSource(int embryo_x, int embryo_y, const sf::Color& contaminate_color, int iterations)
+void Background::addContaminateSource(FixedObject* barrel, int embryo_x, int embryo_y, const sf::Color& contaminate_color, int iterations)
 {
    ContaminateSource source;
+   source.barrel = barrel;
    source.origin = std::make_pair(embryo_x, embryo_y);
    source.color = contaminate_color;
    source.remaining_cycles = iterations;
@@ -129,29 +130,47 @@ void Background::addContaminateSource(int embryo_x, int embryo_y, const sf::Colo
    m_contaminate_sources.emplace_back(source);
 }
 
+void Background::updateContaminateSource(FixedObject* barrel, int embryo_x, int embryo_y)
+{
+   for (auto& source : m_contaminate_sources)
+   {
+      if (source.barrel == barrel)
+      {
+         source.origin = std::make_pair(embryo_x, embryo_y);
+         break;
+      }
+   }
+}
+
 int Background::getContaminationCount(int part)
 {
    int half_x = background_field_columns / 2;
 
    int score = 0;
-   //int x0 = (part == 0) ? 0 : half_x;
-   //int x1 = (part == 0) ? half_x : background_field_columns;
-   //int y0 = 0;
-   //int y1 = background_field_rows;
-   //for (int idy = y0; idy < y1; ++idy)
-   //   for (int idx = x0; idx < x1; ++idx)
-   //   {
-   //      score += m_field_states[idy][idx];
-   //   }
-   int x0 = (part == 0) ? 0 : 17;
-   int x1 = (part == 0) ? 16: 33;
-   int y0 = 0;
-   int y1 = background_field_rows;
-   for (int idy = y0; idy < y1; ++idy)
-      for (int idx = x0; idx < x1; ++idx)
-      {
-         score += m_field_states[idy][idx];
-      }
+   if (true)//!fullscreen)
+   {
+      int x0 = (part == 0) ? 0 : half_x;
+      int x1 = (part == 0) ? half_x : background_field_columns;
+      int y0 = 0;
+      int y1 = background_field_rows;
+      for (int idy = y0; idy < y1; ++idy)
+         for (int idx = x0; idx < x1; ++idx)
+         {
+            score += m_field_states[idy][idx];
+         }
+   }
+   else
+   {
+      int x0 = (part == 0) ? 0 : 17;
+      int x1 = (part == 0) ? 16 : 33;
+      int y0 = 0;
+      int y1 = background_field_rows;
+      for (int idy = y0; idy < y1; ++idy)
+         for (int idx = x0; idx < x1; ++idx)
+         {
+            score += m_field_states[idy][idx];
+         }
+   }
    
    return score;
 }

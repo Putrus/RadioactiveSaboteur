@@ -10,6 +10,7 @@ constexpr int background_texture_width = 210;
 constexpr int background_field_rows = 36;
 constexpr int background_field_columns = 64;
 
+class FixedObject;
 
 class Background {
 public:
@@ -23,7 +24,8 @@ public:
    void setColor(int x, int y, const sf::Color& color);
    sf::Color getColor(int x, int y);
    void contaminateArea(int embryo_x, int embryo_y, const sf::Color& contaminate_color);
-   void addContaminateSource(int embryo_x, int embryo_y, const sf::Color& contaminate_color, int iterations);
+   void addContaminateSource(FixedObject* barrel, int embryo_x, int embryo_y, const sf::Color& contaminate_color, int iterations);
+   void updateContaminateSource(FixedObject* barrel, int embryo_x, int embryo_y);
    /// Get number of contaminated fields for given half-part (0: left, 1: right)
    int getContaminationCount(int part);
 
@@ -49,6 +51,7 @@ private:
 private:
    struct ContaminateSource
    {
+      FixedObject* barrel;
       std::pair<int, int> origin;
       sf::Color color;
       int remaining_cycles;

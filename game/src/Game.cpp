@@ -513,9 +513,14 @@ void Game::processPlayerEvents(Hero& hero, const sf::Event& event, int player) {
                addNewBarrel(player_settings[player].barrel_spawn_location);
                // radioactivity 3..2..1
                std::pair<int, int> origin_field = m_background.getField(barrel->getPosition());
-               m_background.addContaminateSource(origin_field.first, origin_field.second,
+               m_background.addContaminateSource(barrel, origin_field.first, origin_field.second,
                   hardcoded.comtaminate_color, hardcoded.comtaminate_cycles);
                barrel->touch();
+            }
+            else
+            {
+               std::pair<int, int> origin_field = m_background.getField(barrel->getPosition());
+               m_background.updateContaminateSource(barrel, origin_field.first, origin_field.second);
             }
          }
       }
